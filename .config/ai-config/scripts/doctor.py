@@ -69,6 +69,8 @@ SKILL_TWIN_ROOTS = {
 }
 FIXED_TRACKED = (".gitignore", "skills-lock.json", ".claude/CLAUDE.md")
 FIXED_TRACKED_PREFIXES = (".config/ai-config/", ".github/")
+# Git skips a hook without the exec bit on Linux/macOS; Windows hides the bit, so the index is checked.
+EXECUTABLE_TRACKED = (".config/ai-config/hooks/pre-commit", ".config/ai-config/scripts/setup.sh")
 BACKUP_SUFFIXES = (".bak", ".orig", ".old")
 BARE_COMMAND = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 BAD_COMMAND_SUFFIXES = (".exe", ".cmd", ".bat", ".ps1", ".sh")
@@ -471,6 +473,11 @@ def tracked_set_problems(ctx: Ctx) -> list[tuple[str | None, str]]:
         probe = rel + "/x" if target.is_dir() else rel
         if ctx.git("check-ignore", "-q", probe).returncode == 0:
             problems.append((owner, f"in harnesses.toml but excluded by .gitignore: {rel}"))
+    for rel in EXECUTABLE_TRACKED:
+        staged = ctx.git("ls-files", "-s", "--", rel)
+        mode = staged.stdout.split(" ", 1)[0] if staged.returncode == 0 else ""
+        if mode and mode != "100755":
+            problems.append((None, f"git index mode of {rel} is {mode}, must be 100755 (git update-index --chmod=+x)"))
     return problems
 
 

@@ -203,6 +203,19 @@ def test_tracked_set_disagreement_is_drift_everywhere(world):
     assert doctor.exit_code(cells) == 1
 
 
+@pytest.mark.parametrize("rel", doctor.EXECUTABLE_TRACKED)
+def test_hook_or_setup_script_without_exec_bit_in_index_is_drift(world, rel):
+    home, reg = world
+    write(home, rel, "#!/bin/sh\n")
+    subprocess.run(["git", "-C", str(home), "add", "-f", rel], check=True)
+    subprocess.run(["git", "-C", str(home), "update-index", "--chmod=-x", rel], check=True)
+    by, cells = states(home, reg)
+    assert all(by[h, "config"].state == doctor.DRIFT for h in doctor.HARNESSES)
+    subprocess.run(["git", "-C", str(home), "update-index", "--chmod=+x", rel], check=True)
+    by, cells = states(home, reg)
+    assert all(by[h, "config"].state != doctor.DRIFT for h in doctor.HARNESSES)
+
+
 def test_failed_check_is_unknown_not_ok(world, monkeypatch):
     def boom(ctx, h):
         raise OSError("disk")
