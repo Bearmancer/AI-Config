@@ -166,11 +166,12 @@ PY
 # then add every lock skill for Claude Code, one `add` per skill name. npx reads stdin,
 # so each call gets </dev/null and cannot eat the loop's input.
 # computedHash is a sha256 over the raw bytes of a fresh `git clone` of the source, so a
-# CRLF checkout (Git for Windows ships core.autocrlf=true) changes it. These env vars set
-# core.autocrlf=false for the npx processes only; no git config file is touched.
+# CRLF checkout changes it: Git for Windows ships core.autocrlf=true, and even with it off a
+# text=auto repo (firecrawl/skills) is checked out with native CRLF unless core.eol=lf. These
+# env vars set both for the npx processes only; no git config file is touched.
 (
   cd "$HOME"
-  export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.autocrlf GIT_CONFIG_VALUE_0=false
+  export GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=core.autocrlf GIT_CONFIG_VALUE_0=false GIT_CONFIG_KEY_1=core.eol GIT_CONFIG_VALUE_1=lf
   npx --yes skills experimental_install
   mapfile -t pairs < <(python3 - <<'PY'
 import json
