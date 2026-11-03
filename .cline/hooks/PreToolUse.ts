@@ -221,18 +221,41 @@ export function inspectToolCall(name: string, input: unknown): void {
 	}
 }
 
+function block(message: string): void {
+	process.stdout.write(JSON.stringify({ cancel: true, errorMessage: message }));
+}
+
+// Cline sends both tool_call {name, input} and preToolUse {toolName, parameters} (parameters: string-valued map).
+// A payload that is not JSON never occurs in a real run, so it is blocked rather than waved through.
 async function main(): Promise<void> {
-	let payload: { tool_call?: { name?: string; input?: unknown }; preToolUse?: { toolName?: string } };
+	let payload: {
+		tool_call?: { name?: string; input?: unknown };
+		preToolUse?: { toolName?: string; parameters?: Record<string, unknown> };
+	};
 	try {
 		payload = JSON.parse(await Bun.stdin.text());
 	} catch {
+		block("[Policy Violation: guard-hook-payload] The PreToolUse hook payload is not valid JSON, so the tool call cannot be checked and was blocked.");
 		return;
 	}
-	const name = payload.tool_call?.name ?? payload.preToolUse?.toolName ?? "";
+	const name = payload?.tool_call?.name ?? payload?.preToolUse?.toolName ?? "";
+	let input = payload?.tool_call?.input;
+	if (input === undefined && payload?.preToolUse?.parameters) {
+		input = Object.fromEntries(
+			Object.entries(payload.preToolUse.parameters).map(([k, v]) => {
+				if (typeof v !== "string" || !/^\s*[\[{]/.test(v)) return [k, v];
+				try {
+					return [k, JSON.parse(v)];
+				} catch {
+					return [k, v];
+				}
+			}),
+		);
+	}
 	try {
-		inspectToolCall(name, payload.tool_call?.input);
+		inspectToolCall(name, input);
 	} catch (e) {
-		process.stdout.write(JSON.stringify({ cancel: true, errorMessage: (e as Error).message }));
+		block((e as Error).message);
 	}
 }
 
