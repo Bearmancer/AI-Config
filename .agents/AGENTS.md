@@ -47,3 +47,19 @@ In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the re
 
 If there is no `.codegraph/` directory, skip CodeGraph entirely; indexing is the user's decision.
 <!-- CODEGRAPH_END -->
+
+## Agent skills
+
+For the AI-Config repo (git folder `~/Dev/AI-Config/.git`, work tree `$HOME`):
+
+### Issue tracker
+
+GitHub issues on `Bearmancer/AI-Config`; always pass `-R Bearmancer/AI-Config`. See `~/.config/ai-config/docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default labels: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `~/.config/ai-config/docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `~/.config/ai-config/GLOSSARY.md` and `~/.config/ai-config/docs/adr/`. See `~/.config/ai-config/docs/agents/domain.md`.
