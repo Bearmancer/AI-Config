@@ -21,6 +21,7 @@
 		"background_compaction": true,
 	},
 	"lsp": true,
+	"snapshots": false,
 	"warming": true,
 	"websearch": {
 		"provider": "random"
@@ -31,6 +32,12 @@
 		},
 		"plan": {
 			"model": "google/antigravity-gemini-3.8-flash-high"
+		},
+		"explore": {
+			"disabled": true
+		},
+		"general": {
+			"disabled": true
 		},
 	},
 	"permissions": [

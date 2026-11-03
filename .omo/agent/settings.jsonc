@@ -6,6 +6,7 @@
 		"qwen-token-plan/qwen3.8-flash",
 	],
 	"hideThinkingBlock": true,
+	"defaultProvider": "anthropic-subscription",
 	"favoriteModels": [
 		"anthropic-subscription/claude-sonnet-5-5",
 		"anthropic-subscription/claude-haiku-5-5",

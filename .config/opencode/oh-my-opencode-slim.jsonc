@@ -1,5 +1,22 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
+  "disabled_agents": [],
+  "compactSidebar": true,
+  "stripOrchestratorModel": false,
+  "routingBlock": true,
+  "autoUpdate": true,
+  "image_routing": "auto",
+  "disabled_hooks": [],
+  "disabled_commands": [],
+  "deepworkGuardMode": "enforce",
+  "disabled_mcps": [],
+  "disabled_tools": [],
+  "disabled_skills": [],
+  "companion": {
+    "enabled": false,
+    "speed": 1
+  },
+  "setDefaultAgent": false,
   // Root preset = zero-cost default. Switch presets per session; no edit needed.
   "preset": "default-free",
   "presets": {
