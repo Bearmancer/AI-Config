@@ -129,7 +129,7 @@ if (-not $env:BWS_ACCESS_TOKEN) { throw 'BWS_ACCESS_TOKEN is not set (process or
 if (Test-Path (Join-Path $Repo '.git')) { throw "$Repo already exists; setup is one-shot" }
 
 # 1. Clone without a checkout and point the worktree at $HOME.
-Invoke-Native 'git clone' { git clone --no-checkout --branch $Branch $Remote $Repo }
+Invoke-Native 'git clone' { git clone --no-checkout --branch $Branch -- $Remote $Repo }
 Invoke-Native 'git config core.worktree' { git -C $Repo config core.worktree $HOME }
 Invoke-Native 'git config status.showUntrackedFiles' { git -C $Repo config status.showUntrackedFiles no }
 Invoke-Native 'git config core.hooksPath' { git -C $Repo config core.hooksPath (Join-Path $ConfigDir 'hooks') }
@@ -140,7 +140,7 @@ $diff = git -C $Repo diff
 if ($LASTEXITCODE -ne 0) { throw "git diff failed with exit code $LASTEXITCODE" }
 [IO.File]::WriteAllText($Report, (($diff -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))
 Write-Host "Live-file diff saved to $Report (it may contain secrets; delete it after review)."
-Invoke-Native 'git checkout' { git -C $Repo checkout -f $Branch }
+Invoke-Native 'git checkout' { git -C $Repo checkout -f --end-of-options $Branch }
 
 # 3. User environment variables for the secrets the MCP set references.
 $opencode = Get-Content -Raw $OpenCodeConfig | ConvertFrom-Json
@@ -186,6 +186,8 @@ try {
     foreach ($skill in $lock.skills.PSObject.Properties) {
         $source = $skill.Value.source
         $name = $skill.Name
+        # The skills CLI has no `--` separator, so a value that could read as an option is refused.
+        if ($name.StartsWith('-') -or $source.StartsWith('-')) { throw "skills-lock.json: refusing option-like source or name for '$name'" }
         Invoke-Native "npx skills add $source -s $name" { npx --yes skills add $source -s $name -a claude-code -y }
     }
 }

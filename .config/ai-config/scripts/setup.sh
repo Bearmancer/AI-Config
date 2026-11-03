@@ -32,16 +32,17 @@ done
 [ ! -e "$repo/.git" ] || { echo "$repo already exists; setup is one-shot" >&2; exit 1; }
 
 # 1. Clone without a checkout and point the worktree at $HOME.
-git clone --no-checkout --branch "$branch" "$remote" "$repo"
+git clone --no-checkout --branch "$branch" -- "$remote" "$repo"
 git -C "$repo" config core.worktree "$HOME"
 git -C "$repo" config status.showUntrackedFiles no
 git -C "$repo" config core.hooksPath "$config_dir/hooks"
 
 # 2. Report how the live files differ from the repo, then take the repo's version.
 git -C "$repo" read-tree HEAD
-git -C "$repo" diff >"$report"
+# The diff can contain secrets: create the report owner-only.
+(umask 077; git -C "$repo" diff >"$report")
 echo "Live-file diff saved to $report (it may contain secrets; delete it after review)."
-git -C "$repo" checkout -f "$branch"
+git -C "$repo" checkout -f --end-of-options "$branch"
 
 # Steps 3 and 5 share one reader of opencode.jsonc (comments and trailing commas allowed).
 export AI_CONFIG_OPENCODE_CONFIG="$HOME/.config/opencode/opencode.jsonc"
@@ -115,7 +116,13 @@ for var in variables:
     if secret is None:
         missing.append(var)
         continue
-    lines.append(f"{var}={secret['value']}")
+    value = secret["value"]
+    if any(c in value for c in "\r\n\0"):
+        sys.exit(f"secret for {var} contains a newline or NUL character and cannot be written to environment.d")
+    if not re.fullmatch(r"[A-Za-z0-9_@%+=:,./-]*", value):
+        # Single quotes keep $, spaces and # literal for both systemd and a shell sourcing the file.
+        value = "'" + value.replace("'", "'\\''") + "'"
+    lines.append(f"{var}={value}")
     print(f"env: set {var}")
 if lines:
     target = Path.home() / ".config/environment.d/ai-config.conf"
@@ -177,7 +184,10 @@ PY
 import json
 from pathlib import Path
 
+# The skills CLI has no `--` separator, so a value that could read as an option is refused.
 for name, entry in json.loads((Path.home() / "skills-lock.json").read_text("utf-8"))["skills"].items():
+    if name.startswith("-") or entry["source"].startswith("-"):
+        raise SystemExit(f"skills-lock.json: refusing option-like source or name for {name!r}")
     print(entry["source"], name, sep="\t")
 PY
   )
