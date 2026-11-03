@@ -184,6 +184,18 @@ def test_skill_dir_not_in_lock_is_stale_drift_but_synced_is_not(world):
     assert doctor.exit_code(cells) == 1
 
 
+def test_omo_disabled_skill_without_core_filter_is_drift(world):
+    home, reg = world
+    write(home, ".omo/omo.jsonc", json.dumps({"disabled_skills": ["alpha"]}))
+    write(home, ".omo/agent/settings.jsonc", "{}")
+    by, _ = states(home, reg)
+    assert by["omo", "skills"].state == doctor.DRIFT
+    assert any("disabled skill visible in omo: alpha" in r for r in by["omo", "skills"].reasons)
+    write(home, ".omo/agent/settings.jsonc", json.dumps({"skills": ["!**/alpha"]}))
+    by, _ = states(home, reg)
+    assert by["omo", "skills"].state == doctor.OK
+
+
 def test_claude_skills_dir_absent_is_missing_and_synced_is_ignored(world):
     home, reg = world
     by, _ = states(home, reg)

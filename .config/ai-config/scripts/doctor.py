@@ -359,7 +359,24 @@ def check_skills(ctx: Ctx, h: str) -> Cell:
         ]
         if twins:
             cell.add(DRIFT, f"twin copies under ~/{twin_rel}: {', '.join(sorted(twins)[:5])}")
+    if h == "omo":
+        _omo_skill_filter(ctx, cell, present)
     return cell
+
+
+def _omo_skill_filter(ctx: Ctx, cell: Cell, present: set) -> None:
+    # omo.jsonc disabled_skills filters bundled skills only; the core
+    # filter for ~/.agents/skills is `skills` in agent/settings.jsonc.
+    try:
+        omo_cfg = jsonc.parse((ctx.home / ".omo/omo.jsonc").read_text(encoding="utf-8"), strict=False)
+        core_cfg = jsonc.parse((ctx.home / ".omo/agent/settings.jsonc").read_text(encoding="utf-8"), strict=False)
+    except (OSError, jsonc.JsonError, TypeError, AttributeError) as exc:
+        cell.add(DRIFT, f"omo skill filter unreadable: {exc}")
+        return
+    patterns = set(core_cfg.get("skills") or ())
+    for name in sorted(set(omo_cfg.get("disabled_skills") or ()) & present):
+        if not patterns & {f"!**/{name}", f"!{name}", f"!**/{name}/**"}:
+            cell.add(DRIFT, f'disabled skill visible in omo: {name}; add "!**/{name}" to ~/.omo/agent/settings.jsonc skills')
 
 
 def _config_files(ctx: Ctx, h: str):
