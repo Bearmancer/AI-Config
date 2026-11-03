@@ -9,9 +9,11 @@
 #      ~/.config/environment.d/ai-config.conf (mode 600), read at the next login.
 #   4. npx skills experimental_install, run from $HOME. It installs only to
 #      universal agents (.agents/skills), so it then runs
-#      npx skills add <source> -s <names> -a claude-code -y for each source in
-#      ~/skills-lock.json to fill ~/.claude/skills.
-#   5. Write the OpenCode MCP server set into the app-owned Cline and Claude files.
+#      npx skills add <source> -s <name> -a claude-code -y for each lock skill
+#      (one name per call; multi-name -s fails on some sources) to fill ~/.claude/skills.
+#   5. Write the OpenCode MCP server set into the app-owned Cline and Claude files:
+#      Cline holds every server with all but the harnesses.toml [shared] enabled_servers
+#      set to disabled; Claude holds only the enabled servers.
 #
 # Usage: setup.sh <remote> [branch]. Needs git, bws, npx, python3, BWS_ACCESS_TOKEN.
 set -euo pipefail
@@ -46,7 +48,7 @@ export AI_CONFIG_OPENCODE_CONFIG="$HOME/.config/opencode/opencode.jsonc"
 
 rc=0
 python3 - <<'PY' || rc=$?
-import json, os, re, subprocess, sys
+import json, os, re, subprocess, sys, tomllib
 from pathlib import Path
 
 ENV_REF = re.compile(r"\{env:([A-Za-z_][A-Za-z0-9_]*)\}")
@@ -95,6 +97,9 @@ def resolve(var, secrets):
 
 
 servers = load_jsonc(Path(os.environ["AI_CONFIG_OPENCODE_CONFIG"]).read_text("utf-8"))["mcp"]["servers"]
+enabled = set(
+    tomllib.loads((Path.home() / ".config/ai-config/harnesses.toml").read_text("utf-8"))["shared"]["enabled_servers"]
+)
 variables = sorted(
     {m for s in servers.values() for v in s.get("environment", {}).values() for m in ENV_REF.findall(v)}
 )
@@ -135,43 +140,46 @@ def entry(server, template, typed):
     return out
 
 
-def write_servers(path, label, template, typed):
+def write_servers(path, label, template, typed, keep_disabled):
     doc = json.loads(path.read_text("utf-8")) if path.exists() else {}
     doc.setdefault("mcpServers", {})
     for name, server in servers.items():
-        doc["mcpServers"][name] = entry(server, template, typed)
+        if name in enabled:
+            doc["mcpServers"][name] = entry(server, template, typed)
+        elif keep_disabled:
+            doc["mcpServers"][name] = {**entry(server, template, typed), "disabled": True}
+        else:
+            doc["mcpServers"].pop(name, None)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
     os.replace(tmp, path)
-    print(f"{label}: wrote {len(servers)} MCP servers to {path}")
+    print(f"{label}: wrote {len(doc['mcpServers'])} MCP servers to {path} (enabled: {', '.join(sorted(enabled))})")
 
 
-write_servers(Path.home() / ".cline/data/settings/cline_mcp_settings.json", "cline", "${env:VAR}", False)
-write_servers(Path.home() / ".claude.json", "claude", "${VAR}", True)
+write_servers(Path.home() / ".cline/data/settings/cline_mcp_settings.json", "cline", "${env:VAR}", False, True)
+write_servers(Path.home() / ".claude.json", "claude", "${VAR}", True, False)
 sys.exit(1 if missing else 0)
 PY
 
 # 4. Skills: restore from ~/skills-lock.json into ~/.agents/skills (4-25 minutes, needs GitHub),
-# then add every lock skill for Claude Code, one `add` per lock source.
+# then add every lock skill for Claude Code, one `add` per skill name. npx reads stdin,
+# so each call gets </dev/null and cannot eat the loop's input.
 (
   cd "$HOME"
   npx --yes skills experimental_install
-  groups=$(python3 - <<'PY'
+  mapfile -t pairs < <(python3 - <<'PY'
 import json
 from pathlib import Path
 
-by_source = {}
 for name, entry in json.loads((Path.home() / "skills-lock.json").read_text("utf-8"))["skills"].items():
-    by_source.setdefault(entry["source"], []).append(name)
-for source, names in by_source.items():
-    print(source, " ".join(names), sep="\t")
+    print(entry["source"], name, sep="\t")
 PY
   )
-  while IFS=$'\t' read -r source names; do
-    # shellcheck disable=SC2086
-    npx --yes skills add "$source" -s $names -a claude-code -y
-  done <<<"$groups"
+  for pair in "${pairs[@]}"; do
+    IFS=$'\t' read -r source name <<<"$pair"
+    npx --yes skills add "$source" -s "$name" -a claude-code -y </dev/null
+  done
 )
 
 [ "$rc" -eq 0 ] || exit "$rc"

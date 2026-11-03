@@ -12,9 +12,11 @@ One-shot per-PC setup: puts the AI-Config repo in place at $HOME and wires the a
    from `bws secret list` (values are never printed).
 4. Restores skills with `npx skills experimental_install` run from $HOME. That
    command installs only to universal agents (.agents/skills), so it then runs
-   `npx skills add <source> -s <names> -a claude-code -y` for each source in
-   ~/skills-lock.json to fill ~/.claude/skills.
-5. Writes the OpenCode MCP server set into the app-owned Cline and Claude files.
+   `npx skills add <source> -s <name> -a claude-code -y` for each lock skill (one name
+   per call; multi-name -s fails on some sources) to fill ~/.claude/skills.
+5. Writes the OpenCode MCP server set into the app-owned Cline and Claude files:
+   Cline holds every server with all but the harnesses.toml [shared] enabled_servers
+   set to disabled; Claude holds only the enabled servers.
 
 Run once per PC. Needs git, bws, npx and BWS_ACCESS_TOKEN.
 
@@ -36,6 +38,7 @@ $Report = Join-Path $Repo 'live-vs-repo.diff'
 $OpenCodeConfig = Join-Path $HOME '.config/opencode/opencode.jsonc'
 $ClineMcp = Join-Path $HOME '.cline/data/settings/cline_mcp_settings.json'
 $ClaudeJson = Join-Path $HOME '.claude.json'
+$HarnessesToml = Join-Path $ConfigDir 'harnesses.toml'
 # bws prefix for an MCP env var is the var minus _API_KEY, unless listed here (prefix -> bws prefix).
 $PrefixAlias = @{ SGAI = 'SCRAPEGRAPHAI' }
 $EnvRef = '\{env:([A-Za-z_][A-Za-z0-9_]*)\}'
@@ -94,17 +97,25 @@ function ConvertTo-McpEntry {
 }
 
 function Set-McpServers {
-    param([string]$Path, [string]$Label, [string]$EnvTemplate, [bool]$Typed, $Servers)
+    param([string]$Path, [string]$Label, [string]$EnvTemplate, [bool]$Typed, [bool]$KeepDisabled, $Servers, [string[]]$Enabled)
     $doc = Read-JsonObject $Path
     if (-not $doc.PSObject.Properties['mcpServers'] -or $null -eq $doc.mcpServers) {
         $doc | Add-Member -NotePropertyName mcpServers -NotePropertyValue ([pscustomobject]@{}) -Force
     }
     foreach ($server in $Servers.PSObject.Properties) {
-        $entry = ConvertTo-McpEntry $server.Value $EnvTemplate $Typed
-        $doc.mcpServers | Add-Member -NotePropertyName $server.Name -NotePropertyValue $entry -Force
+        if ($Enabled -contains $server.Name) {
+            $entry = ConvertTo-McpEntry $server.Value $EnvTemplate $Typed
+            $doc.mcpServers | Add-Member -NotePropertyName $server.Name -NotePropertyValue $entry -Force
+        }
+        elseif ($KeepDisabled) {
+            $entry = ConvertTo-McpEntry $server.Value $EnvTemplate $Typed
+            $entry.disabled = $true
+            $doc.mcpServers | Add-Member -NotePropertyName $server.Name -NotePropertyValue $entry -Force
+        }
+        else { $doc.mcpServers.PSObject.Properties.Remove($server.Name) }
     }
     Write-JsonFile $Path $doc
-    Write-Host "${Label}: wrote $(@($Servers.PSObject.Properties).Count) MCP servers to $Path"
+    Write-Host "${Label}: wrote $(@($doc.mcpServers.PSObject.Properties).Count) MCP servers to $Path (enabled: $($Enabled -join ', '))"
 }
 
 # 0. Preconditions.
@@ -163,16 +174,19 @@ Push-Location $HOME
 try {
     Invoke-Native 'npx skills experimental_install' { npx --yes skills experimental_install }
     $lock = Get-Content -Raw (Join-Path $HOME 'skills-lock.json') | ConvertFrom-Json
-    foreach ($group in ($lock.skills.PSObject.Properties | Group-Object { $_.Value.source })) {
-        $names = @($group.Group | ForEach-Object Name)
-        Invoke-Native "npx skills add $($group.Name)" { npx --yes skills add $group.Name -s $names -a claude-code -y }
+    foreach ($skill in $lock.skills.PSObject.Properties) {
+        $source = $skill.Value.source
+        $name = $skill.Name
+        Invoke-Native "npx skills add $source -s $name" { npx --yes skills add $source -s $name -a claude-code -y }
     }
 }
 finally { Pop-Location }
 
 # 5. MCP entries for the apps whose files are not tracked.
-Set-McpServers $ClineMcp 'cline' '${env:VAR}' $false $servers
-Set-McpServers $ClaudeJson 'claude' '${VAR}' $true $servers
+$enabled = @(python -c "import tomllib,sys;print('\n'.join(tomllib.load(open(sys.argv[1],'rb'))['shared']['enabled_servers']))" $HarnessesToml)
+if ($LASTEXITCODE -ne 0 -or -not $enabled) { throw "cannot read [shared] enabled_servers from $HarnessesToml" }
+Set-McpServers $ClineMcp 'cline' '${env:VAR}' $false $true $servers $enabled
+Set-McpServers $ClaudeJson 'claude' '${VAR}' $true $false $servers $enabled
 
 if ($missing) { exit 1 }
 Write-Host 'setup complete. Restart apps and shells to pick up the new environment variables.'
