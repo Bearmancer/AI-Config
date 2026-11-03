@@ -96,6 +96,24 @@ _Avoid_: Exception file
 The `.json` file beside a `.jsonc` of the same stem, or a skills copy beside `~/.agents/skills`. Doctor reports a twin as drift.
 _Avoid_: Duplicate, backup
 
+## OpenCode files
+
+**Runtime config**:
+`~/.config/opencode/opencode.jsonc`. OpenCode's server and runtime settings: providers, models, permissions, MCP servers, plugins and warming. Its schema is https://opencode.ai/config.json. TUI settings are not here; they live in the cli file. No tui.jsonc exists.
+_Avoid_: tui.jsonc
+
+**CLI file**:
+`~/.config/opencode/cli.json`. OpenCode's TUI and CLI settings: theme, keybinds, session, tabs, diffs. Its schema is https://opencode.ai/v2/cli.json. It stays strict JSON because OpenCode loads no .jsonc of that stem. OpenCode regenerates it when it is deleted and rewrites it in place when a TUI setting changes, so a diff in it is read and then committed or reverted (see ADR 0003).
+_Avoid_: cli.jsonc
+
+**TUI preferences**:
+`~/.config/opencode/tui-preferences.jsonc`. Shared preferences for the OpenCode TUI plugins, one top-level key per plugin. A plugin updates its own keys and keeps the rest of the file, comments included.
+_Avoid_: tui.jsonc
+
+**Warming**:
+The `warming` key in `~/.config/opencode/opencode.jsonc`. It keeps recently active sessions warm with transient model requests. It is off by default and on here. The key takes a boolean or an object with `prompt`, `interval` (`auto` or a duration string) and `duration`.
+_Avoid_: Keep-alive
+
 ## MCP and secrets
 
 **Stanza**:
