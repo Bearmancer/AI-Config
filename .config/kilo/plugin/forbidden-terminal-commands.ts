@@ -1,4 +1,4 @@
-function splitStatements(cmd: string): string[] {
+function splitTopLevel(cmd: string): string[] {
 	const trimmed = cmd.trim();
 	if (!trimmed) return [];
 
@@ -36,6 +36,17 @@ function splitStatements(cmd: string): string[] {
 	if (current.trim()) statements.push(current.trim());
 
 	return statements;
+}
+
+function splitStatements(cmd: string): string[] {
+	const out: string[] = [];
+	for (const stmt of splitTopLevel(cmd)) {
+		out.push(stmt);
+		// `bash -c "cmd /c x"` / `sh -c 'pwsh -Command x'`: inspect the wrapped command too.
+		const wrapped = stmt.match(/^(?:\S*[\\\/])?(?:ba|da|z|k)?sh(?:\.exe)?\s+(?:-\S+\s+)*?-\w*c\w*\s+(?:"((?:[^"\\]|\\.)*)"|'([^']*)')\s*$/i);
+		if (wrapped) out.push(...splitStatements(wrapped[1] ?? wrapped[2] ?? ""));
+	}
+	return out;
 }
 
 function isForbiddenCmdInvocation(cmd: string): boolean {

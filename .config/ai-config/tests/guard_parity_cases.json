@@ -82,5 +82,65 @@
   "path": "C:/t/d.txt",
   "content": "import os\nos.listdir()",
   "expect": "allow"
+ },
+ {
+  "id": "bash-c-cmd",
+  "command": "bash -c \"cmd /c x\"",
+  "expect": "cmd"
+ },
+ {
+  "id": "sh-c-pwsh",
+  "command": "sh -c 'pwsh -Command x'",
+  "expect": "pwsh"
+ },
+ {
+  "id": "bash-lc-nested",
+  "command": "bash -lc \"echo a; cmd.exe /k pause\"",
+  "expect": "cmd"
+ },
+ {
+  "id": "bash-c-benign",
+  "command": "bash -c \"echo cmd /c\"",
+  "expect": "allow"
+ },
+ {
+  "id": "edit-filepath-os-no-pathlib",
+  "tool": "edit",
+  "path": "e1.py",
+  "disk": "import sys\n",
+  "content": "print(os.listdir('.'))",
+  "expect": "pathlib"
+ },
+ {
+  "id": "edit-adds-ospath-pathlib-on-disk",
+  "tool": "edit",
+  "path": "e2.py",
+  "disk": "from pathlib import Path\n",
+  "content": "x = os.path.join('a', 'b')",
+  "expect": "allow"
+ },
+ {
+  "id": "edit-bare-open-pathlib-on-disk",
+  "tool": "edit",
+  "path": "e3.py",
+  "disk": "from pathlib import Path\n",
+  "content": "open('f').read()",
+  "expect": "pathlib"
+ },
+ {
+  "id": "patch-add-os-no-pathlib",
+  "cline": "patch",
+  "path": "C:/t/p1.py",
+  "content": "import os\nprint(os.listdir('.'))",
+  "expect": "pathlib"
+ },
+ {
+  "id": "patch-update-ospath-pathlib-on-disk",
+  "cline": "patch",
+  "tool": "edit",
+  "path": "p2.py",
+  "disk": "from pathlib import Path\n",
+  "content": "x = os.path.join('a', 'b')",
+  "expect": "allow"
  }
 ]

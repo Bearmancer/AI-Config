@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 /**
  * Validates Python scripts created or modified via write/edit tools.
  * Enforces:
@@ -5,7 +7,8 @@
  * 2. Forbids bare `open(...)` calls without Path.
  * 3. Requires explicit UTF-8 encoding when reading/writing files.
  */
-function inspectPythonPathlib(path: string, content: string): void {
+// `existing` is the file's on-disk content for edit-type tools: the new fragment alone cannot show a pathlib import that is already there.
+function inspectPythonPathlib(path: string, content: string, existing = ""): void {
   if (typeof path !== "string" || !path.endsWith(".py")) return;
   if (typeof content !== "string" || !content.trim()) return;
 
@@ -15,7 +18,7 @@ function inspectPythonPathlib(path: string, content: string): void {
   const hasFileOps = fileOpRegex.test(content);
 
   // Check if pathlib / Path is imported
-  const importsPathlib = /(?:from\s+pathlib\s+import|\bimport\s+pathlib\b)/.test(content);
+  const importsPathlib = /(?:from\s+pathlib\s+import|\bimport\s+pathlib\b)/.test(`${content}\n${existing}`);
 
   // Check for bare open(...) call that doesn't go through Path
   const hasBareOpen = /(?<!\.)\bopen\s*\(/.test(content);
@@ -46,11 +49,19 @@ function inspectPythonPathlib(path: string, content: string): void {
   }
 }
 
+function readExisting(path: string): string {
+  try {
+    return readFileSync(path, "utf8");
+  } catch {
+    return "";
+  }
+}
+
 function inspectToolInput(tool: string, input: unknown): void {
   if (!input || typeof input !== "object") return;
   const record = input as Record<string, unknown>;
 
-  // Kilo's write/edit tools name the path `filePath`; OpenCode's plugin reads `path`.
+  // Kilo's write/edit tools name the path `filePath`; `path` is accepted too.
   const filePath =
     typeof record.filePath === "string"
       ? record.filePath
@@ -70,7 +81,7 @@ function inspectToolInput(tool: string, input: unknown): void {
         : ""
       : "";
 
-  inspectPythonPathlib(filePath, content);
+  inspectPythonPathlib(filePath, content, tool === "edit" ? readExisting(filePath) : "");
 }
 
 // Kilo plugin API: https://kilo.ai/docs/automate/extending/plugins ("tool.execute.before", default export { id, server }).

@@ -1,10 +1,12 @@
+import { readFileSync } from "node:fs";
+
 // Cline PreToolUse hook: same detectors and messages as the OpenCode plugins
 // forbidden-terminal-commands.ts and force-pathlib.ts.
 // Mechanism: Cline runs ~/.cline/hooks/PreToolUse.<ext> (here .ts, via `bun run`) with the
 // hook payload as JSON on stdin; stdout `{"cancel":true,"errorMessage":...}` blocks the tool call.
 // Source: @cline/core hook-file-config (event names, search paths), K3 (control output).
 
-function splitStatements(cmd: string): string[] {
+function splitTopLevel(cmd: string): string[] {
 	const trimmed = cmd.trim();
 	if (!trimmed) return [];
 
@@ -42,6 +44,17 @@ function splitStatements(cmd: string): string[] {
 	if (current.trim()) statements.push(current.trim());
 
 	return statements;
+}
+
+function splitStatements(cmd: string): string[] {
+	const out: string[] = [];
+	for (const stmt of splitTopLevel(cmd)) {
+		out.push(stmt);
+		// `bash -c "cmd /c x"` / `sh -c 'pwsh -Command x'`: inspect the wrapped command too.
+		const wrapped = stmt.match(/^(?:\S*[\\\/])?(?:ba|da|z|k)?sh(?:\.exe)?\s+(?:-\S+\s+)*?-\w*c\w*\s+(?:"((?:[^"\\]|\\.)*)"|'([^']*)')\s*$/i);
+		if (wrapped) out.push(...splitStatements(wrapped[1] ?? wrapped[2] ?? ""));
+	}
+	return out;
 }
 
 function isForbiddenCmdInvocation(cmd: string): boolean {
@@ -102,7 +115,8 @@ Inline 'powershell'/'pwsh' (-Command/-EncodedCommand) is forbidden in OpenCode s
  * 2. Forbids bare `open(...)` calls without Path.
  * 3. Requires explicit UTF-8 encoding when reading/writing files.
  */
-function inspectPythonPathlib(path: string, content: string): void {
+// `existing` is the file's on-disk content for edit-type tools: the new fragment alone cannot show a pathlib import that is already there.
+function inspectPythonPathlib(path: string, content: string, existing = ""): void {
   if (typeof path !== "string" || !path.endsWith(".py")) return;
   if (typeof content !== "string" || !content.trim()) return;
 
@@ -112,7 +126,7 @@ function inspectPythonPathlib(path: string, content: string): void {
   const hasFileOps = fileOpRegex.test(content);
 
   // Check if pathlib / Path is imported
-  const importsPathlib = /(?:from\s+pathlib\s+import|\bimport\s+pathlib\b)/.test(content);
+  const importsPathlib = /(?:from\s+pathlib\s+import|\bimport\s+pathlib\b)/.test(`${content}\n${existing}`);
 
   // Check for bare open(...) call that doesn't go through Path
   const hasBareOpen = /(?<!\.)\bopen\s*\(/.test(content);
@@ -144,6 +158,14 @@ function inspectPythonPathlib(path: string, content: string): void {
 }
 
 
+function readExisting(path: string): string {
+  try {
+    return readFileSync(path, "utf8");
+  } catch {
+    return "";
+  }
+}
+
 export { isForbiddenCmdInvocation, isForbiddenPowerShellCommand, inspectPythonPathlib };
 
 function commandStrings(input: unknown): string[] {
@@ -169,21 +191,30 @@ export function inspectToolCall(name: string, input: unknown): void {
 		}
 	} else if (name === "editor") {
 		const r = (input ?? {}) as Record<string, unknown>;
-		if (typeof r.path === "string" && typeof r.new_text === "string") inspectPythonPathlib(r.path, r.new_text);
+		if (typeof r.path === "string" && typeof r.new_text === "string") {
+			// old_text / insert_line mean an edit of an existing file; otherwise the file is created or replaced.
+			const isEdit = r.old_text != null || r.insert_line != null;
+			inspectPythonPathlib(r.path, r.new_text, isEdit ? readExisting(r.path) : "");
+		}
 	} else if (name === "apply_patch") {
 		const text = typeof input === "string" ? input : typeof (input as Record<string, unknown>)?.input === "string" ? ((input as Record<string, unknown>).input as string) : "";
 		let path = "";
+		let update = false;
 		let body: string[] = [];
 		const flush = () => {
-			if (path) inspectPythonPathlib(path, body.join("\n"));
+			if (path) inspectPythonPathlib(path, body.join("\n"), update ? readExisting(path) : "");
 			path = "";
+			update = false;
 			body = [];
 		};
 		for (const line of text.split(/\r?\n/)) {
-			const head = line.match(/^\*\*\* (?:Add|Update) File: (.+)$/);
+			const head = line.match(/^\*\*\* (Add|Update) File: (.+)$/);
 			if (head || line.startsWith("*** ")) {
 				flush();
-				if (head) path = head[1].trim();
+				if (head) {
+					path = head[2].trim();
+					update = head[1] === "Update";
+				}
 			} else if (path && line.startsWith("+")) body.push(line.slice(1));
 		}
 		flush();
