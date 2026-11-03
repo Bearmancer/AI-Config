@@ -60,6 +60,8 @@ mcp = { path = "~/.config/kilo/kilo.jsonc", tracked = true, env_ref = "{env:VAR}
 skills = { path = "~/.agents/skills", tracked = false, writer = "npx skills experimental_install" }
 files = [
   { path = "~/.config/kilo/kilo.jsonc", tracked = true },
+  { path = "~/.config/kilo/plugin/forbidden-terminal-commands.ts", tracked = true },
+  { path = "~/.config/kilo/plugin/force-pathlib.ts", tracked = true },
 ]
 
 [cline]
@@ -70,6 +72,7 @@ files = [
   { path = "~/.cline/rules", tracked = true, optional = true },
   { path = "~/.cline/workflows", tracked = true, optional = true },
   { path = "~/.cline/hooks", tracked = true, optional = true },
+  { path = "~/.cline/hooks/PreToolUse.ts", tracked = true },
   { path = "~/.cline/skills", tracked = true, optional = true },
 ]
 

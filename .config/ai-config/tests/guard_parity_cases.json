@@ -1,0 +1,86 @@
+[
+ {
+  "id": "cmd-c",
+  "command": "cmd /c echo hi",
+  "expect": "cmd"
+ },
+ {
+  "id": "cmd-exe-path",
+  "command": "C:\\Windows\\System32\\cmd.exe /c dir",
+  "expect": "cmd"
+ },
+ {
+  "id": "cmd-after-and",
+  "command": "echo a && cmd /k pause",
+  "expect": "cmd"
+ },
+ {
+  "id": "pwsh-command",
+  "command": "pwsh -Command \"echo hi\"",
+  "expect": "pwsh"
+ },
+ {
+  "id": "powershell-enc",
+  "command": "powershell.exe -EncodedCommand AAAA",
+  "expect": "pwsh"
+ },
+ {
+  "id": "pwsh-bare",
+  "command": "pwsh",
+  "expect": "pwsh"
+ },
+ {
+  "id": "cmd-wraps-pwsh",
+  "command": "cmd /c pwsh -c \"x\"",
+  "expect": "cmd"
+ },
+ {
+  "id": "ps1-direct",
+  "command": "./x.ps1",
+  "expect": "allow"
+ },
+ {
+  "id": "pwsh-file",
+  "command": "pwsh -File ./task.ps1",
+  "expect": "allow"
+ },
+ {
+  "id": "bat-direct",
+  "command": "./task.bat",
+  "expect": "allow"
+ },
+ {
+  "id": "uv-run",
+  "command": "uv run ./task.py",
+  "expect": "allow"
+ },
+ {
+  "id": "quoted-cmd-text",
+  "command": "echo \"cmd /c\"",
+  "expect": "allow"
+ },
+ {
+  "id": "py-os-no-pathlib",
+  "path": "C:/t/a.py",
+  "content": "import os\nprint(os.listdir('.'))",
+  "expect": "pathlib"
+ },
+ {
+  "id": "py-bare-open",
+  "path": "C:/t/b.py",
+  "content": "from pathlib import Path\nopen('f').read()",
+  "expect": "pathlib"
+ },
+ {
+  "id": "py-pathlib-ok",
+  "path": "C:/t/c.py",
+  "content": "from pathlib import Path\nprint(Path('.').read_text(encoding='utf-8'))",
+  "expect": "allow"
+ },
+ {
+  "id": "non-py-ignored",
+  "path": "C:/t/d.txt",
+  "content": "import os\nos.listdir()",
+  "expect": "allow"
+ }
+]

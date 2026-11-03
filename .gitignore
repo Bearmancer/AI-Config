@@ -40,6 +40,10 @@
 !/.config/kilo/
 /.config/kilo/*
 !/.config/kilo/kilo.jsonc
+!/.config/kilo/plugin/
+/.config/kilo/plugin/*
+!/.config/kilo/plugin/forbidden-terminal-commands.ts
+!/.config/kilo/plugin/force-pathlib.ts
 !/.config/cortexkit/
 /.config/cortexkit/*
 !/.config/cortexkit/magic-context.jsonc
