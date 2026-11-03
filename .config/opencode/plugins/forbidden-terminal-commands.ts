@@ -1,5 +1,3 @@
-import { Plugin } from "@opencode/plugin";
-
 function splitStatements(cmd: string): string[] {
 	const trimmed = cmd.trim();
 	if (!trimmed) return [];
@@ -40,7 +38,7 @@ function splitStatements(cmd: string): string[] {
 	return statements;
 }
 
-export function isForbiddenCmdInvocation(cmd: string): boolean {
+function isForbiddenCmdInvocation(cmd: string): boolean {
 	if (typeof cmd !== "string") return false;
 
 	for (const stmt of splitStatements(cmd)) {
@@ -58,7 +56,7 @@ export function isForbiddenCmdInvocation(cmd: string): boolean {
 	return false;
 }
 
-export function isForbiddenPowerShellCommand(cmd: string): boolean {
+function isForbiddenPowerShellCommand(cmd: string): boolean {
 	if (typeof cmd !== "string") return false;
 
 	for (const stmt of splitStatements(cmd)) {
@@ -85,10 +83,10 @@ export function isForbiddenPowerShellCommand(cmd: string): boolean {
 	return false;
 }
 
-export const CMD_POLICY_ERROR_MESSAGE = `[Policy Violation: forbidden-terminal-commands]
+const CMD_POLICY_ERROR_MESSAGE = `[Policy Violation: forbidden-terminal-commands]
 cmd.exe is forbidden in OpenCode shells. Write a .bat (or .py) file and run it once: './task.bat' or 'uv run ./task.py'.`;
 
-export const POWERSHELL_POLICY_ERROR_MESSAGE = `[Policy Violation: forbidden-terminal-commands]
+const POWERSHELL_POLICY_ERROR_MESSAGE = `[Policy Violation: forbidden-terminal-commands]
 Inline 'powershell'/'pwsh' (-Command/-EncodedCommand) is forbidden in OpenCode shells. Write a .ps1 (or .py) file and run it once: './task.ps1' or 'uv run ./task.py'.`;
 
 function inspectCommand(input: unknown): void {
@@ -106,25 +104,16 @@ function inspectCommand(input: unknown): void {
 	if (isForbiddenPowerShellCommand(cmd)) throw new Error(POWERSHELL_POLICY_ERROR_MESSAGE);
 }
 
-export default {
-	...Plugin.define({
-		id: "forbidden-terminal-commands",
-		async setup(ctx) {
-			await ctx.tool.hook("execute.before", async (event) => {
-				if (event.tool !== "shell") return;
-				inspectCommand(event.input);
-			});
+// OpenCode plugin API: https://opencode.ai/docs/plugins (an exported plugin function returning the hooks).
+// Only the plugin function is exported: OpenCode treats every exported function as a plugin.
+export const ForbiddenTerminalCommands = async () => {
+	return {
+		"tool.execute.before": async (
+			input: { tool: string },
+			output: { args?: Record<string, unknown> }
+		) => {
+			if (input.tool !== "shell") return;
+			inspectCommand(output?.args);
 		},
-	}),
-	async server() {
-		return {
-			"tool.execute.before": async (
-				input: { tool: string },
-				output: { args?: Record<string, unknown> }
-			) => {
-				if (input.tool !== "shell") return;
-				inspectCommand(output?.args);
-			},
-		};
-	},
+	};
 };

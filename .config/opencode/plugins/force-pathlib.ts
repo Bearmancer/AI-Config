@@ -1,5 +1,3 @@
-import { Plugin } from "@opencode/plugin";
-
 /**
  * Validates Python scripts created or modified via write/edit tools.
  * Enforces:
@@ -7,7 +5,7 @@ import { Plugin } from "@opencode/plugin";
  * 2. Forbids bare `open(...)` calls without Path.
  * 3. Requires explicit UTF-8 encoding when reading/writing files.
  */
-export function inspectPythonPathlib(path: string, content: string): void {
+function inspectPythonPathlib(path: string, content: string): void {
   if (typeof path !== "string" || !path.endsWith(".py")) return;
   if (typeof content !== "string" || !content.trim()) return;
 
@@ -48,7 +46,7 @@ export function inspectPythonPathlib(path: string, content: string): void {
   }
 }
 
-export function inspectToolInput(tool: string, input: unknown): void {
+function inspectToolInput(tool: string, input: unknown): void {
   if (!input || typeof input !== "object") return;
   const record = input as Record<string, unknown>;
 
@@ -69,25 +67,16 @@ export function inspectToolInput(tool: string, input: unknown): void {
   inspectPythonPathlib(filePath, content);
 }
 
-export default {
-  ...Plugin.define({
-    id: "force-pathlib",
-    async setup(ctx) {
-      await ctx.tool.hook("execute.before", async (event) => {
-        if (event.tool !== "write" && event.tool !== "edit") return;
-        inspectToolInput(event.tool, event.input);
-      });
+// OpenCode plugin API: https://opencode.ai/docs/plugins (an exported plugin function returning the hooks).
+// Only the plugin function is exported: OpenCode treats every exported function as a plugin.
+export const ForcePathlib = async () => {
+  return {
+    "tool.execute.before": async (
+      input: { tool: string },
+      output: { args?: Record<string, unknown> }
+    ) => {
+      if (input.tool !== "write" && input.tool !== "edit") return;
+      inspectToolInput(input.tool, output?.args);
     },
-  }),
-  async server() {
-    return {
-      "tool.execute.before": async (
-        input: { tool: string },
-        output: { args?: Record<string, unknown> }
-      ) => {
-        if (input.tool !== "write" && input.tool !== "edit") return;
-        inspectToolInput(input.tool, output?.args);
-      },
-    };
-  },
+  };
 };
