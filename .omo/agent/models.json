@@ -1,0 +1,28 @@
+{
+	"$schema": "https://pi.dev/schemas/models.schema.json",
+	"disabledProviders": ["anthropic", "openrouter", "alibaba-token-plan", "google-vertex", "meta"],
+	"providers": {
+		"qwen-token-plan": {
+			"whitelist": ["qwen3.8-flash"]
+		},
+		"qwen-token-plan-individual": {
+			"whitelist": ["qwen3.8-flash"]
+		},
+		"opencode-go": {
+			"whitelist": ["muse-spark-1.3-contributor", "glm-5.3", "glm-5.3-flash", "deepseek-v4.1-flash", "mimo-v2.6-flash"]
+		},
+		"opencode": {
+			"whitelist": [
+				"big-pickle",
+				"beam-free",
+				"flint-40b-free",
+				"mimo-v2.6-flash-free",
+				"nemotron-3.5-super-vl-free",
+				"nemotron-3.5-lightning-free",
+				"jev-1.13-free",
+				"deepseek-v4.1-flash-free",
+				"glm-5.3-flash-free"
+			]
+		}
+	}
+}

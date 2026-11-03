@@ -1,0 +1,25 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Test suite
+        run: uv run --no-project --with pytest pytest -q .config/ai-config/tests
+
+      - name: Doctor (repo-only drift check)
+        run: uv run --no-project python .config/ai-config/scripts/doctor.py --repo-only --home "$GITHUB_WORKSPACE"

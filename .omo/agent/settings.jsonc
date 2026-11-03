@@ -1,0 +1,25 @@
+{
+	"$schema": "https://pi.dev/schemas/settings.schema.json",
+	"enabledModels": [
+		"anthropic-subscription/claude-sonnet-5-5",
+		"anthropic-subscription/claude-haiku-5-5",
+		"qwen-token-plan/qwen3.8-flash",
+	],
+	"hideThinkingBlock": true,
+	"favoriteModels": [
+		"anthropic-subscription/claude-sonnet-5-5",
+		"anthropic-subscription/claude-haiku-5-5",
+		"qwen-token-plan/qwen3.8-flash",
+	],
+	"defaultProjectTrust": "always",
+	"autocompleteMaxVisible": 10,
+	"cacheWarming": "streaming",
+	"defaultModel": "anthropic-subscription/claude-sonnet-5-5",
+	"defaultThinkingLevel": "high",
+	"doubleEscapeAction": "none",
+	"enableInstallTelemetry": false,
+	"tuiMode": "fullscreen",
+	"showHardwareCursor": true,
+	"steeringMode": "all",
+	"showCacheMissNotices": true,
+}

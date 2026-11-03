@@ -1,0 +1,114 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "instructions": [
+    "~/.agents/AGENTS.md"
+  ],
+  "shell": "C:/Program Files/Git/bin/bash.exe",
+  "tool_output": {
+    "max_lines": 2000,
+    "max_bytes": 51200
+  },
+  "compaction": {
+    "auto": true
+  },
+  "mcp": {
+    "servers": {
+      "agentql": {
+        "enabled": false,
+        "type": "local",
+        "command": [
+          "agentql-mcp"
+        ],
+        "environment": {
+          "AGENTQL_API_KEY": "{env:AGENTQL_API_KEY}"
+        }
+      },
+      "arxiv": {
+        "enabled": false,
+        "type": "local",
+        "command": [
+          "arxiv-mcp-server"
+        ]
+      },
+      "codegraph": {
+        "type": "local",
+        "command": [
+          "codegraph",
+          "serve",
+          "--mcp"
+        ]
+      },
+      "dappier": {
+        "enabled": false,
+        "type": "local",
+        "command": [
+          "dappier-mcp"
+        ],
+        "environment": {
+          "DAPPIER_API_KEY": "{env:DAPPIER_API_KEY}"
+        }
+      },
+      "exa": {
+        "enabled": false,
+        "type": "local",
+        "command": [
+          "exa-mcp-server"
+        ],
+        "environment": {
+          "EXA_API_KEY": "{env:EXA_API_KEY}"
+        }
+      },
+      "firecrawl": {
+        "enabled": false,
+        "type": "local",
+        "command": [
+          "firecrawl-mcp"
+        ],
+        "environment": {
+          "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
+        }
+      },
+      "paper-search": {
+        "enabled": false,
+        "type": "local",
+        "command": [
+          "paper-search-mcp"
+        ]
+      },
+      "scrapegraph": {
+        "enabled": false,
+        "type": "local",
+        "command": [
+          "scrapegraph-mcp"
+        ],
+        "environment": {
+          "SGAI_API_KEY": "{env:SGAI_API_KEY}"
+        }
+      },
+      "tavily": {
+        "enabled": false,
+        "type": "local",
+        "command": [
+          "tavily-mcp"
+        ],
+        "environment": {
+          "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
+        }
+      },
+      "zotero": {
+        "enabled": false,
+        "type": "local",
+        "command": [
+          "zotero-mcp"
+        ],
+        "environment": {
+          "ZOTERO_API_KEY": "{env:ZOTERO_API_KEY}",
+          "ZOTERO_LIBRARY_ID": "22374787"
+        }
+      }
+    }
+  },
+  "permission": {
+    "bash": "allow"
+  }
+}

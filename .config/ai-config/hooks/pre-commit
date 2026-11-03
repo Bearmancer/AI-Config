@@ -1,0 +1,14 @@
+#!/bin/sh
+# Drift is a hard stop: any failure below refuses the commit.
+# Wired with `git config core.hooksPath ~/.config/ai-config/hooks` (scripts/setup.*).
+cfg="$HOME/.config/ai-config"
+export PYTHONDONTWRITEBYTECODE=1
+
+echo "pre-commit: redaction scan of staged files" >&2
+uv run --no-project python "$cfg/scripts/scan_staged.py" || exit 1
+
+echo "pre-commit: ai-config doctor" >&2
+uv run --no-project python "$cfg/scripts/doctor.py" || exit 1
+
+echo "pre-commit: test suite" >&2
+uv run --no-project --with pytest pytest -q -p no:cacheprovider "$cfg/tests" || exit 1

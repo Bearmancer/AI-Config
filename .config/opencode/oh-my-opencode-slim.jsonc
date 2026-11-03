@@ -1,0 +1,214 @@
+{
+  "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
+  // Root preset = zero-cost default. Switch presets per session; no edit needed.
+  "preset": "default-free",
+  "presets": {
+    // Zero-cost: Zen free first, Antigravity Gemini Flash High, OpenCode Go last.
+    "default-free": {
+      "orchestrator": {
+        "model": [
+          "opencode/glm-5.3-flash-free",
+          "google/antigravity-gemini-3.8-flash-high",
+          "opencode-go/muse-spark-1.3-contributor"
+        ],
+        "skills": [
+          "*"
+        ]
+      },
+      "oracle": {
+        "model": [
+          "opencode/glm-5.3-flash-free",
+          "google/antigravity-gemini-3.8-flash-high",
+          "opencode-go/muse-spark-1.3-contributor"
+        ],
+        "skills": [
+          "simplify"
+        ]
+      },
+      "designer": {
+        "model": [
+          "opencode/deepseek-v4.1-flash-free",
+          "google/antigravity-gemini-3.8-flash-high",
+          "opencode-go/muse-spark-1.3-contributor"
+        ],
+        "skills": []
+      },
+      // Lowest workers (explorer, fixer, observer): free Zen at index 0, free Go at index 1.
+      "explorer": {
+        "model": [
+          "opencode/mimo-v2.6-flash-free",
+          "opencode-go/beam-free",
+          "google/antigravity-gemini-3.8-flash-high",
+          "opencode-go/muse-spark-1.3-contributor"
+        ],
+        "skills": []
+      },
+      "fixer": {
+        "model": [
+          "opencode/mimo-v2.6-flash-free",
+          "opencode-go/beam-free",
+          "google/antigravity-gemini-3.8-flash-high",
+          "opencode-go/muse-spark-1.3-contributor"
+        ],
+        "skills": []
+      },
+      "observer": {
+        "model": [
+          "opencode/mimo-v2.6-flash-free",
+          "opencode-go/beam-free",
+          "google/antigravity-gemini-3.8-flash-high",
+          "opencode-go/muse-spark-1.3-contributor"
+        ],
+        "skills": []
+      },
+      "council": {
+        "model": [
+          "opencode/glm-5.3-flash-free",
+          "google/antigravity-gemini-3.8-flash-high",
+          "opencode-go/muse-spark-1.3-contributor"
+        ],
+        "skills": []
+      }
+    },
+    // Anthropic: led by the claude-agent provider (sonnet/haiku aliases resolve to claude-sonnet-5-5 / claude-haiku-5-5). Claude 5.5 family only. Lowest workers keep two free rungs first; OpenCode Go is last in every seat.
+    "anthropic": {
+      "orchestrator": {
+        "model": [
+          "claude-agent/sonnet",
+          "opencode-go/claude-haiku-5-5"
+        ],
+        "skills": [
+          "*"
+        ]
+      },
+      "oracle": {
+        "model": [
+          "claude-agent/sonnet",
+          "opencode-go/claude-haiku-5-5"
+        ],
+        "skills": [
+          "simplify"
+        ]
+      },
+      "designer": {
+        "model": [
+          "claude-agent/sonnet",
+          "opencode-go/claude-haiku-5-5"
+        ],
+        "skills": []
+      },
+      "explorer": {
+        "model": [
+          "opencode/mimo-v2.6-flash-free",
+          "opencode-go/beam-free",
+          "claude-agent/haiku",
+          "opencode-go/claude-haiku-5-5"
+        ],
+        "skills": []
+      },
+      "fixer": {
+        "model": [
+          "opencode/mimo-v2.6-flash-free",
+          "opencode-go/beam-free",
+          "claude-agent/haiku",
+          "opencode-go/claude-haiku-5-5"
+        ],
+        "skills": []
+      },
+      "observer": {
+        "model": [
+          "opencode/mimo-v2.6-flash-free",
+          "opencode-go/beam-free",
+          "claude-agent/haiku",
+          "opencode-go/claude-haiku-5-5"
+        ],
+        "skills": []
+      }
+    },
+    // Task mix: Alibaba token plan for judgment, Antigravity for design, free rungs first for the lowest workers, OpenCode Go last.
+    "paid-mix": {
+      "orchestrator": {
+        "model": [
+          "alibaba-token-plan/deepseek-v4.1-flash-1017",
+          "opencode-go/deepseek-v4.1-flash"
+        ],
+        "skills": [
+          "*"
+        ]
+      },
+      "oracle": {
+        "model": [
+          "alibaba-token-plan/deepseek-v4-pro",
+          "opencode-go/deepseek-v4-pro"
+        ],
+        "skills": [
+          "simplify"
+        ]
+      },
+      "designer": {
+        "model": [
+          "google/antigravity-gemini-3.8-flash-high",
+          "alibaba-token-plan/deepseek-v4.1-flash-1017",
+          "opencode-go/deepseek-v4.1-flash"
+        ],
+        "skills": []
+      },
+      "explorer": {
+        "model": [
+          "opencode/mimo-v2.6-flash-free",
+          "opencode-go/beam-free",
+          "alibaba-token-plan/qwen3.8-flash",
+          "google/antigravity-gemini-3.8-flash-high",
+          "opencode-go/muse-spark-1.3-contributor"
+        ],
+        "skills": []
+      },
+      "fixer": {
+        "model": [
+          "opencode/mimo-v2.6-flash-free",
+          "opencode-go/beam-free",
+          "alibaba-token-plan/deepseek-v4.1-flash-1017",
+          "opencode-go/deepseek-v4.1-flash"
+        ],
+        "skills": []
+      },
+      "observer": {
+        "model": [
+          "opencode/mimo-v2.6-flash-free",
+          "opencode-go/beam-free",
+          "alibaba-token-plan/qwen3.8-flash",
+          "google/antigravity-gemini-3.8-flash-high",
+          "opencode-go/muse-spark-1.3-contributor"
+        ],
+        "skills": []
+      }
+    }
+  },
+  "council": {
+    "default_preset": "default",
+    "presets": {
+      "default": {
+        "alpha": {
+          "model": "google/antigravity-gemini-3.8-flash-high",
+          "prompt": "You are Councillor Alpha, specialized in Code Quality, Implementation Cleanliness, and Syntax Standards. You evaluate code clarity, maintainability, type correctness, edge cases, and unit test coverage."
+        },
+        "beta": {
+          "model": "google/antigravity-gemini-3.8-flash-high",
+          "prompt": "You are Councillor Beta, specialized in System Architecture, Interface Contracts, Modularity, and State Management. You evaluate architectural seams, coupling, data flow, failure modes, and migration safety."
+        },
+        "gamma": {
+          "model": "google/antigravity-gemini-3.8-flash-high",
+          "prompt": "You are Councillor Gamma, specialized in Security, Hardening, and Threat Modeling. You evaluate auth boundaries, input validation, secret hygiene, dependency risks, and permission enforcement."
+        },
+        "delta": {
+          "model": "google/antigravity-gemini-3.8-flash-high",
+          "prompt": "You are Councillor Delta, specialized in Performance, Efficiency, and Scalability. You evaluate memory usage, I/O bottlenecks, concurrency, latency, resource leaks, and caching strategies."
+        },
+        "epsilon": {
+          "model": "google/antigravity-gemini-3.8-flash-high",
+          "prompt": "You are Councillor Epsilon, specialized in Product UX, Developer Experience, API Ergonomics, and Trade-off Synthesis. You balance complexity against practical utility and reconcile engineering proposals into clear action items."
+        }
+      }
+    }
+  }
+}
