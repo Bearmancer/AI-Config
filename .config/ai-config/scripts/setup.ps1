@@ -170,6 +170,12 @@ if ($missing) { Write-Warning "no bws secret found for: $($missing -join ', ')" 
 
 # 4. Skills: restore from ~/skills-lock.json into ~/.agents/skills (4-25 minutes, needs GitHub),
 # then add every lock skill for Claude Code, one `add` per lock source.
+# computedHash is a sha256 over the raw bytes of a fresh `git clone` of the source, so a
+# CRLF checkout (Git for Windows ships core.autocrlf=true) changes it. These env vars set
+# core.autocrlf=false for the npx processes only; no git config file is touched.
+$env:GIT_CONFIG_COUNT = '1'
+$env:GIT_CONFIG_KEY_0 = 'core.autocrlf'
+$env:GIT_CONFIG_VALUE_0 = 'false'
 Push-Location $HOME
 try {
     Invoke-Native 'npx skills experimental_install' { npx --yes skills experimental_install }
@@ -180,7 +186,10 @@ try {
         Invoke-Native "npx skills add $source -s $name" { npx --yes skills add $source -s $name -a claude-code -y }
     }
 }
-finally { Pop-Location }
+finally {
+    Pop-Location
+    Remove-Item Env:GIT_CONFIG_COUNT, Env:GIT_CONFIG_KEY_0, Env:GIT_CONFIG_VALUE_0
+}
 
 # 5. MCP entries for the apps whose files are not tracked.
 $enabled = @(python -c "import tomllib,sys;print('\n'.join(tomllib.load(open(sys.argv[1],'rb'))['shared']['enabled_servers']))" $HarnessesToml)

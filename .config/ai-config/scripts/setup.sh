@@ -165,8 +165,12 @@ PY
 # 4. Skills: restore from ~/skills-lock.json into ~/.agents/skills (4-25 minutes, needs GitHub),
 # then add every lock skill for Claude Code, one `add` per skill name. npx reads stdin,
 # so each call gets </dev/null and cannot eat the loop's input.
+# computedHash is a sha256 over the raw bytes of a fresh `git clone` of the source, so a
+# CRLF checkout (Git for Windows ships core.autocrlf=true) changes it. These env vars set
+# core.autocrlf=false for the npx processes only; no git config file is touched.
 (
   cd "$HOME"
+  export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.autocrlf GIT_CONFIG_VALUE_0=false
   npx --yes skills experimental_install
   mapfile -t pairs < <(python3 - <<'PY'
 import json
