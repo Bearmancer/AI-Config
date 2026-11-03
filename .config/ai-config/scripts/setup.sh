@@ -15,7 +15,7 @@
 #      Cline holds every server with all but the harnesses.toml [shared] enabled_servers
 #      set to disabled; Claude holds only the enabled servers.
 #
-# Usage: setup.sh <remote> [branch]. Needs git, bws, npx, python3, BWS_ACCESS_TOKEN.
+# Usage: setup.sh <remote> [branch]. Needs git, bws, npx, uv, BWS_ACCESS_TOKEN.
 set -euo pipefail
 
 remote="${1:?usage: setup.sh <remote> [branch]}"
@@ -25,7 +25,7 @@ repo="$HOME/Dev/AI-Config"
 config_dir="$HOME/.config/ai-config"
 report="$repo/live-vs-repo.diff"
 
-for tool in git bws npx python3; do
+for tool in git bws npx uv; do
   command -v "$tool" >/dev/null || { echo "$tool is not on PATH" >&2; exit 1; }
 done
 [ -n "${BWS_ACCESS_TOKEN:-}" ] || { echo "BWS_ACCESS_TOKEN is not set" >&2; exit 1; }
@@ -48,7 +48,7 @@ git -C "$repo" checkout -f --end-of-options "$branch"
 export AI_CONFIG_OPENCODE_CONFIG="$HOME/.config/opencode/opencode.jsonc"
 
 rc=0
-python3 - <<'PY' || rc=$?
+uv run --no-project python - <<'PY' || rc=$?
 import json, os, re, subprocess, sys, tomllib
 from pathlib import Path
 
@@ -180,7 +180,7 @@ PY
   cd "$HOME"
   export GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=core.autocrlf GIT_CONFIG_VALUE_0=false GIT_CONFIG_KEY_1=core.eol GIT_CONFIG_VALUE_1=lf
   npx --yes skills experimental_install
-  mapfile -t pairs < <(python3 - <<'PY'
+  mapfile -t pairs < <(uv run --no-project python - <<'PY'
 import json
 from pathlib import Path
 

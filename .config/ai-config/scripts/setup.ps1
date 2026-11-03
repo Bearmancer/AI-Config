@@ -197,7 +197,7 @@ finally {
 }
 
 # 5. MCP entries for the apps whose files are not tracked.
-$enabled = @(python -c "import tomllib,sys;print('\n'.join(tomllib.load(open(sys.argv[1],'rb'))['shared']['enabled_servers']))" $HarnessesToml)
+$enabled = @(uv run --no-project python -c "import tomllib,sys;print('\n'.join(tomllib.load(open(sys.argv[1],'rb'))['shared']['enabled_servers']))" $HarnessesToml)
 if ($LASTEXITCODE -ne 0 -or -not $enabled) { throw "cannot read [shared] enabled_servers from $HarnessesToml" }
 Set-McpServers $ClineMcp 'cline' '${env:VAR}' $false $true $servers $enabled
 Set-McpServers $ClaudeJson 'claude' '${VAR}' $true $false $servers $enabled
