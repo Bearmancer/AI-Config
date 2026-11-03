@@ -232,6 +232,7 @@ def test_repo_only_needs_no_live_files(world):
     shutil.rmtree(home / ".agents/skills")
     by, cells = states(home, reg, None, repo_only=True)
     assert by["cline", "mcp"].state == doctor.NA
+    assert all(by[h, "skills"].state == doctor.NA for h in doctor.HARNESSES if "na" not in reg[h]["skills"])
     assert doctor.exit_code(cells) == 0
 
 

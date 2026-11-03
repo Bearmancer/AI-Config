@@ -331,6 +331,7 @@ def check_skills(ctx: Ctx, h: str) -> Cell:
         cell.add(DRIFT, f"~/skills-lock.json: {exc}")
         return cell
     if ctx.repo_only:
+        cell.state, cell.reasons = NA, ["repo-only run: the installed skills live only on a PC"]
         return cell
     root = ctx.path(spec["path"])
     if not root.is_dir():
