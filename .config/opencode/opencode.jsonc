@@ -45,6 +45,14 @@
 			"effect": "allow"
 		}
 	],
+	// Vertex denied wholesale (owner, 2026-11-05): one provider.use policy replaces the old per-model google-vertex disable block.
+	"policies": [
+		{
+			"action": "provider.use",
+			"resource": "google-vertex",
+			"effect": "deny"
+		}
+	],
 	"tool_output": {
 		"max_lines": 2000,
 		"max_bytes": 51200
@@ -187,26 +195,8 @@
         "opus": { "disabled": true }
       }
     },
-    "google-vertex": {
-      "models": {
-        "claude-fable-5-1@default": { "disabled": true },
-        "claude-fable-5@default": { "disabled": true },
-        "claude-haiku-4-5@20251001": { "disabled": true },
-        "claude-opus-4-5@20251101": { "disabled": true },
-        "claude-opus-4-6@default": { "disabled": true },
-        "claude-opus-4-7@default": { "disabled": true },
-        "claude-opus-4-8@default": { "disabled": true },
-        "claude-opus-5-5@default": { "disabled": true },
-        "claude-opus-5@default": { "disabled": true },
-        "claude-sonnet-4-6@default": { "disabled": true },
-        "claude-sonnet-5@default": { "disabled": true }
-      }
-    },
     "google": {
-      "models": {
-        "antigravity-claude-opus-4-6-thinking": { "disabled": true },
-        "antigravity-claude-sonnet-4-6": { "disabled": true }
-      }
+      "models": {}
     }
 		},
 		"plugin": [
