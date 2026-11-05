@@ -284,5 +284,8 @@
 		"which-key.page.down": "ctrl+alt+pagedown",
 		"which-key.home": "ctrl+alt+home",
 		"which-key.end": "ctrl+alt+end"
-	}
+  },
+  "theme": {
+    "mode": "dark"
+  }
 }

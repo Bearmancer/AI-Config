@@ -206,23 +206,23 @@
     "presets": {
       "default": {
         "alpha": {
-          "model": "google/antigravity-gemini-3.8-flash-high",
+          "model": ["google/antigravity-gemini-3.8-flash-high", "alibaba-token-plan/qwen3.8-flash"],
           "prompt": "You are Councillor Alpha, specialized in Code Quality, Implementation Cleanliness, and Syntax Standards. You evaluate code clarity, maintainability, type correctness, edge cases, and unit test coverage."
         },
         "beta": {
-          "model": "google/antigravity-gemini-3.8-flash-high",
+          "model": ["google/antigravity-gemini-3.8-flash-high", "alibaba-token-plan/qwen3.8-flash"],
           "prompt": "You are Councillor Beta, specialized in System Architecture, Interface Contracts, Modularity, and State Management. You evaluate architectural seams, coupling, data flow, failure modes, and migration safety."
         },
         "gamma": {
-          "model": "google/antigravity-gemini-3.8-flash-high",
+          "model": ["google/antigravity-gemini-3.8-flash-high", "alibaba-token-plan/qwen3.8-flash"],
           "prompt": "You are Councillor Gamma, specialized in Security, Hardening, and Threat Modeling. You evaluate auth boundaries, input validation, secret hygiene, dependency risks, and permission enforcement."
         },
         "delta": {
-          "model": "google/antigravity-gemini-3.8-flash-high",
+          "model": ["google/antigravity-gemini-3.8-flash-high", "alibaba-token-plan/qwen3.8-flash"],
           "prompt": "You are Councillor Delta, specialized in Performance, Efficiency, and Scalability. You evaluate memory usage, I/O bottlenecks, concurrency, latency, resource leaks, and caching strategies."
         },
         "epsilon": {
-          "model": "google/antigravity-gemini-3.8-flash-high",
+          "model": ["google/antigravity-gemini-3.8-flash-high", "alibaba-token-plan/qwen3.8-flash"],
           "prompt": "You are Councillor Epsilon, specialized in Product UX, Developer Experience, API Ergonomics, and Trade-off Synthesis. You balance complexity against practical utility and reconcile engineering proposals into clear action items."
         }
       }
