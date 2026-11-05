@@ -8,6 +8,7 @@
 	"model": "google/antigravity-gemini-3.8-flash-high",
 	"plugins": [
 		"opencode-antigravity-auth@2.1.2",
+		"oh-my-opencode-slim",
 		"@cortexkit/opencode-magic-context@0.49.35",
 		"@slkiser/opencode-quota@6.2.1"
 	],	"compaction": {
@@ -198,10 +199,7 @@
     "google": {
       "models": {}
     }
-		},
-		"plugin": [
-			"oh-my-opencode-slim"
-    ],
+    },
     "provider": {
       // Detected alibaba-token-plan authentication; opencode-quota added this global provider declaration.
       "alibaba-token-plan": {},
