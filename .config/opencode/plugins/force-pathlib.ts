@@ -1,12 +1,27 @@
+/**
+ * OpenCode server plugin (2.x plugin shape).
+ *
+ * OpenCode 2.x validates the module's DEFAULT export as `{ id, setup }`
+ * (or `{ id, effect }`) and runs `setup(ctx)`; hooks register on their
+ * owning domain (`ctx.tool.hook(...)`). Throwing from `execute.before`
+ * is the documented way to refuse a tool call — the thrown message
+ * becomes the tool error the model reads.
+ *
+ * A named-export hook module (the 1.x/docs shape) is REJECTED on 2.x:
+ *   PluginModule.LoadError: Plugin must export a default definition with
+ *   an id and an effect or setup function. (cause: SchemaError(Missing key at ["default"]))
+ * The loader logs one WARN and the server keeps running with the plugin
+ * silently dead — hence the exacting shape here. Only the default object
+ * is exported; `Plugin.define` from `@opencode/plugin` is an identity
+ * function (the host validates the shape, not the helper), so this file
+ * stays dependency-free.
+ *
+ * Policy: Python scripts written or edited via write/edit must use
+ * `pathlib.Path` for path/file operations and must not use bare
+ * `open(...)`; explicit UTF-8 encoding is required.
+ */
 import { readFileSync } from "node:fs";
 
-/**
- * Validates Python scripts created or modified via write/edit tools.
- * Enforces:
- * 1. Must use `pathlib.Path` whenever performing path or file operations.
- * 2. Forbids bare `open(...)` calls without Path.
- * 3. Requires explicit UTF-8 encoding when reading/writing files.
- */
 // `existing` is the file's on-disk content for edit-type tools: the new fragment alone cannot show a pathlib import that is already there.
 function inspectPythonPathlib(path: string, content: string, existing = ""): void {
   if (typeof path !== "string" || !path.endsWith(".py")) return;
@@ -61,7 +76,7 @@ function inspectToolInput(tool: string, input: unknown): void {
   if (!input || typeof input !== "object") return;
   const record = input as Record<string, unknown>;
 
-  // OpenCode and Kilo name the path `filePath`; `path` is accepted too.
+  // OpenCode 1 names the path `filePath`; OpenCode 2 renamed it to `path`. Both accepted.
   const filePath =
     typeof record.filePath === "string"
       ? record.filePath
@@ -84,16 +99,29 @@ function inspectToolInput(tool: string, input: unknown): void {
   inspectPythonPathlib(filePath, content, tool === "edit" ? readExisting(filePath) : "");
 }
 
-// OpenCode plugin API: https://opencode.ai/docs/plugins (an exported plugin function returning the hooks).
-// Only the plugin function is exported: OpenCode treats every exported function as a plugin.
-export const ForcePathlib = async () => {
-  return {
-    "tool.execute.before": async (
-      input: { tool: string },
-      output: { args?: Record<string, unknown> }
-    ) => {
-      if (input.tool !== "write" && input.tool !== "edit") return;
-      inspectToolInput(input.tool, output?.args);
-    },
-  };
-};
+interface ToolExecuteBeforeEvent {
+  tool: string;
+  input: unknown;
+}
+
+interface ToolDomainLike {
+  hook: (
+    name: string,
+    callback: (event: ToolExecuteBeforeEvent) => void | Promise<void>
+  ) => Promise<unknown>;
+}
+
+interface PluginContextLike {
+  tool?: ToolDomainLike;
+}
+
+async function setup(ctx: PluginContextLike): Promise<void> {
+  if (!ctx?.tool || typeof ctx.tool.hook !== "function") return;
+  await ctx.tool.hook("execute.before", (event) => {
+    if (!event) return;
+    if (event.tool !== "write" && event.tool !== "edit") return;
+    inspectToolInput(event.tool, event.input);
+  });
+}
+
+export default { id: "force-pathlib", setup };

@@ -1,3 +1,26 @@
+/**
+ * OpenCode server plugin (2.x plugin shape).
+ *
+ * OpenCode 2.x validates the module's DEFAULT export as `{ id, setup }`
+ * (or `{ id, effect }`) and runs `setup(ctx)`; hooks register on their
+ * owning domain (`ctx.tool.hook(...)`). Throwing from `execute.before`
+ * is the documented way to refuse a tool call — the thrown message
+ * becomes the tool error the model reads.
+ *
+ * A named-export hook module (the 1.x/docs shape) is REJECTED on 2.x:
+ *   PluginModule.LoadError: Plugin must export a default definition with
+ *   an id and an effect or setup function. (cause: SchemaError(Missing key at ["default"]))
+ * The loader logs one WARN and the server keeps running with the plugin
+ * silently dead — hence the exacting shape here. Only the default object
+ * is exported; `Plugin.define` from `@opencode/plugin` is an identity
+ * function (the host validates the shape, not the helper), so this file
+ * stays dependency-free.
+ *
+ * Policy: cmd.exe wrappers AND inline powershell/pwsh (-Command /
+ * -EncodedCommand) are forbidden in OpenCode shells. Write a .bat/.ps1
+ * (or .py) file and run it once instead.
+ */
+
 function splitTopLevel(cmd: string): string[] {
 	const trimmed = cmd.trim();
 	if (!trimmed) return [];
@@ -115,16 +138,28 @@ function inspectCommand(input: unknown): void {
 	if (isForbiddenPowerShellCommand(cmd)) throw new Error(POWERSHELL_POLICY_ERROR_MESSAGE);
 }
 
-// OpenCode plugin API: https://opencode.ai/docs/plugins (an exported plugin function returning the hooks).
-// Only the plugin function is exported: OpenCode treats every exported function as a plugin.
-export const ForbiddenTerminalCommands = async () => {
-	return {
-		"tool.execute.before": async (
-			input: { tool: string },
-			output: { args?: Record<string, unknown> }
-		) => {
-			if (input.tool !== "shell") return;
-			inspectCommand(output?.args);
-		},
-	};
-};
+interface ToolExecuteBeforeEvent {
+	tool: string;
+	input: unknown;
+}
+
+interface ToolDomainLike {
+	hook: (
+		name: string,
+		callback: (event: ToolExecuteBeforeEvent) => void | Promise<void>
+	) => Promise<unknown>;
+}
+
+interface PluginContextLike {
+	tool?: ToolDomainLike;
+}
+
+async function setup(ctx: PluginContextLike): Promise<void> {
+	if (!ctx?.tool || typeof ctx.tool.hook !== "function") return;
+	await ctx.tool.hook("execute.before", (event) => {
+		if (!event || event.tool !== "shell") return;
+		inspectCommand(event.input);
+	});
+}
+
+export default { id: "forbidden-terminal-commands", setup };
