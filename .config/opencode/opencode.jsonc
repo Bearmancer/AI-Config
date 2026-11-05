@@ -199,11 +199,5 @@
     "google": {
       "models": {}
     }
-    },
-    "provider": {
-      // Detected alibaba-token-plan authentication; opencode-quota added this global provider declaration.
-      "alibaba-token-plan": {},
-      // Detected google-agy authentication; opencode-quota added this global provider declaration.
-      "google-agy": {}
     }
 }
