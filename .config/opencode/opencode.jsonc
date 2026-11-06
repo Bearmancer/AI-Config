@@ -5,9 +5,8 @@
 	],
 	"update": "disable",
 	"share": "manual",
-	"model": "google/antigravity-gemini-3.8-flash-high",
+	"model": "alibaba-token-plan/qwen3.8-flash",
 	"plugins": [
-		"opencode-antigravity-auth@2.1.2",
 		"oh-my-opencode-slim",
 		"@cortexkit/opencode-magic-context@0.49.35",
 		"@slkiser/opencode-quota@6.2.1"
@@ -27,10 +26,10 @@
 	},
 	"agents": {
 		"build": {
-			"model": "google/antigravity-gemini-3.8-flash-high"
+			"model": "alibaba-token-plan/qwen3.8-flash"
 		},
 		"plan": {
-			"model": "google/antigravity-gemini-3.8-flash-high"
+			"model": "alibaba-token-plan/qwen3.8-flash"
 		},
 		"explore": {
 			"disabled": true
@@ -195,9 +194,6 @@
         "fable": { "disabled": true },
         "opus": { "disabled": true }
       }
-    },
-    "google": {
-      "models": {}
     }
     }
 }

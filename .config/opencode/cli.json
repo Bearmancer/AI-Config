@@ -3,7 +3,7 @@
 	"session": {
 		"sidebar": "auto",
 		"scrollbar": true,
-		"verbosity": "high",
+		"verbosity": "medium",
 		"thinking": "hide",
 		"image_preview": true,
 		"permissions": "autoaccept"
@@ -88,7 +88,7 @@
 		"pane.focus.left": "<leader>left",
 		"pane.focus.right": "<leader>right",
 		"terminal.select": "<leader>down",
-		"terminal.toggle": "<leader>t",
+		"terminal.toggle": "alt+`",
 		"terminal.close": "<leader>up",
 		"session.toggle.scrollbar": "none",
 		"opencode.status": "<leader>s",
