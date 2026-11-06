@@ -301,6 +301,12 @@
       "skillPath": "skills/lead-generation/SKILL.md",
       "computedHash": "f6032e45861d6e9cd9390022a462d812805f47b35178fe01419b48fffe8b513c"
     },
+    "lookup-music-artists": {
+      "source": "Bearmancer/skills",
+      "sourceType": "github",
+      "skillPath": "lookup-music-artists/SKILL.md",
+      "computedHash": "b821b05a170ebc3685f9b00fd3c961bd8f23f7eba9be6cf6bff7894634fc8ded"
+    },
     "loop-me": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -348,6 +354,12 @@
       "sourceType": "github",
       "skillPath": "purge-safety/SKILL.md",
       "computedHash": "de3d827830de2413c099a25a9a3884e62b2f9f15bebd5fe1592733673ac53daf"
+    },
+    "railed-debugging": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "railed-debugging/SKILL.md",
+      "computedHash": "a59ddef0f4b26c77b53045289bdeacc7cb08ca7191c9d48caf9d34621a22ad26"
     },
     "receiving-code-review": {
       "source": "obra/superpowers",
