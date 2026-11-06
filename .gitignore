@@ -60,4 +60,7 @@
 /.config/opencode/plugins/*
 !/.config/opencode/plugins/forbidden-terminal-commands.ts
 !/.config/opencode/plugins/force-pathlib.ts
+!/.config/opencode/plugins/ps1-lint-guard.ts
+!/.config/opencode/plugins/python-cli-utf8.ts
+!/.config/opencode/plugins/uv-only-python.ts
 .slim/deepwork/
