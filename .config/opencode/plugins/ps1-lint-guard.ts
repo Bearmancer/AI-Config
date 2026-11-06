@@ -58,7 +58,7 @@ function getPs1Path(input: unknown): string | null {
 const SETTINGS_URL = new URL("ps1-lint-settings.psd1", import.meta.url);
 const LINT_SCRIPT = [
   "if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) { exit 0 }",
-  "$settings = $null; try { $settings = Get-Item -LiteralPath $env:PS1_LINT_SETTINGS -ErrorAction Stop } catch { Write-Output ('settings unreadable: ' + $_.Exception.Message) }",
+  "$settings = $null; try { $settings = Get-Item -LiteralPath $env:PS1_LINT_SETTINGS -ErrorAction Stop } catch { [Console]::Error.WriteLine('ps1-lint-guard: settings unreadable, using PSSA defaults: ' + $_.Exception.Message) }",
   "$p = if ($settings) { Invoke-ScriptAnalyzer -Path $env:PS1_LINT_FILE -Settings $settings.FullName -Severity Warning,Error,ParseError } else { Invoke-ScriptAnalyzer -Path $env:PS1_LINT_FILE -Severity Warning,Error,ParseError }",
   "if ($p) { @($p | Select-Object RuleName,Severity,Line,Column,Message) | ConvertTo-Json -Compress }",
 ].join("; ");
@@ -90,7 +90,9 @@ async function lintPs1(filePath: string): Promise<string[]> {
     // render numbers back to names so the message stays readable.
     const SEVERITY_NAMES = ["Information", "Warning", "Error", "ParseError"];
     return list.map((r: Record<string, unknown>) => {
-      const severity = typeof r.Severity === "number" ? (SEVERITY_NAMES[r.Severity] ?? String(r.Severity)) : String(r.Severity);
+      const severity = typeof r.Severity === "number"
+        ? (SEVERITY_NAMES[r.Severity] ?? String(r.Severity))
+        : String(r.Severity);
       return `[${severity}] line ${r.Line}: ${r.RuleName} - ${r.Message}`;
     });
   } catch {
@@ -107,7 +109,7 @@ interface ToolExecuteAfterEvent {
 interface ToolDomainLike {
   hook: (
     name: string,
-    callback: (event: ToolExecuteAfterEvent) => void | Promise<void>
+    callback: (event: ToolExecuteAfterEvent) => void | Promise<void>,
   ) => Promise<unknown>;
 }
 
@@ -129,14 +131,14 @@ async function setup(ctx: PluginContextLike): Promise<void> {
     const problems = await lintPs1(file);
     if (problems.length === 0) return;
     throw new Error(
-      `[Policy Violation: ps1-lint-guard]\n` +
-        `PSScriptAnalyzer found problems in '${file}':\n` +
-        problems.map((p) => `  ${p}`).join("\n") +
-        `\n\nThe file is already saved on disk with these problems. Remediation:\n` +
-        `1. Fix the reported lines and save again, or\n` +
-        `2. Suppress deliberately in the file: [Diagnostics.CodeAnalysis.SuppressMessageAttribute('RuleName', '')] followed by param() (at script top before its param block, or inside the function), or\n` +
-        `3. If the rule conflicts with this host's conventions, disable it host-wide in ps1-lint-settings.psd1 beside this plugin, or\n` +
-        `4. Or delete the file if it should not exist.`
+      `[Policy Violation: ps1-lint-guard]\n`
+        + `PSScriptAnalyzer found problems in '${file}':\n`
+        + problems.map((p) => `  ${p}`).join("\n")
+        + `\n\nThe file is already saved on disk with these problems. Remediation:\n`
+        + `1. Fix the reported lines and save again, or\n`
+        + `2. Suppress deliberately in the file: [Diagnostics.CodeAnalysis.SuppressMessageAttribute('RuleName', '')] followed by param() (at script top before its param block, or inside the function), or\n`
+        + `3. If the rule conflicts with this host's conventions, disable it host-wide in ps1-lint-settings.psd1 beside this plugin, or\n`
+        + `4. Or delete the file if it should not exist.`,
     );
   });
 }

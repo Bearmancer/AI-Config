@@ -19,11 +19,27 @@ from scripts import doctor
 
 CONFIG_DIR = Path(doctor.__file__).resolve().parent.parent
 REAL_GITIGNORE = CONFIG_DIR.parents[1] / ".gitignore"
-NAMES = ("agentql", "arxiv", "codegraph", "dappier", "exa", "firecrawl",
-         "paper-search", "scrapegraph", "tavily", "zotero")
-KEYS = {"agentql": "AGENTQL_API_KEY", "dappier": "DAPPIER_API_KEY", "exa": "EXA_API_KEY",
-        "firecrawl": "FIRECRAWL_API_KEY", "scrapegraph": "SGAI_API_KEY",
-        "tavily": "TAVILY_API_KEY", "zotero": "ZOTERO_API_KEY"}
+NAMES = (
+    "agentql",
+    "arxiv",
+    "codegraph",
+    "dappier",
+    "exa",
+    "firecrawl",
+    "paper-search",
+    "scrapegraph",
+    "tavily",
+    "zotero",
+)
+KEYS = {
+    "agentql": "AGENTQL_API_KEY",
+    "dappier": "DAPPIER_API_KEY",
+    "exa": "EXA_API_KEY",
+    "firecrawl": "FIRECRAWL_API_KEY",
+    "scrapegraph": "SGAI_API_KEY",
+    "tavily": "TAVILY_API_KEY",
+    "zotero": "ZOTERO_API_KEY",
+}
 ENV = {key: "set" for key in KEYS.values()}
 
 
@@ -83,7 +99,10 @@ def world(tmp_path):
     for h in doctor.HARNESSES:
         build_mcp(home, reg, h)
         for spec in reg[h]["files"]:
-            if not spec.get("optional") and not (home / spec["path"].removeprefix("~/")).exists():
+            if (
+                not spec.get("optional")
+                and not (home / spec["path"].removeprefix("~/")).exists()
+            ):
                 write(home, spec["path"], "{}")
     return home, reg
 
@@ -116,7 +135,9 @@ def test_literal_secret_in_a_stanza_is_drift(world):
     home, reg = world
     path = home / ".config/kilo/kilo.jsonc"
     doc = json.loads(path.read_text(encoding="utf-8"))
-    doc["mcp"]["servers"]["exa"]["environment"]["EXA_API_KEY"] = fx("s~k-abcdefghijklmnopqrstuvwx")
+    doc["mcp"]["servers"]["exa"]["environment"]["EXA_API_KEY"] = fx(
+        "s~k-abcdefghijklmnopqrstuvwx"
+    )
     path.write_text(json.dumps(doc, indent=1), encoding="utf-8")
     by, cells = states(home, reg)
     assert by["kilo", "secrets"].state == doctor.DRIFT
@@ -179,7 +200,10 @@ def test_skill_dir_not_in_lock_is_stale_drift_but_synced_is_not(world):
     by, cells = states(home, reg)
     for h in ("omo", "opencode", "claude"):
         assert "stale skill not in lock: gone; purge it" in by[h, "skills"].reasons
-    assert any("stale skill not in lock: ~/.config/kilo/skills/old" in r for r in by["kilo", "skills"].reasons)
+    assert any(
+        "stale skill not in lock: ~/.config/kilo/skills/old" in r
+        for r in by["kilo", "skills"].reasons
+    )
     assert not any("synced" in r for c in cells for r in c.reasons)
     assert doctor.exit_code(cells) == 1
 
@@ -190,7 +214,9 @@ def test_omo_disabled_skill_without_core_filter_is_drift(world):
     write(home, ".omo/agent/settings.jsonc", "{}")
     by, _ = states(home, reg)
     assert by["omo", "skills"].state == doctor.DRIFT
-    assert any("disabled skill visible in omo: alpha" in r for r in by["omo", "skills"].reasons)
+    assert any(
+        "disabled skill visible in omo: alpha" in r for r in by["omo", "skills"].reasons
+    )
     write(home, ".omo/agent/settings.jsonc", json.dumps({"skills": ["!**/alpha"]}))
     by, _ = states(home, reg)
     assert by["omo", "skills"].state == doctor.OK
@@ -220,10 +246,14 @@ def test_hook_or_setup_script_without_exec_bit_in_index_is_drift(world, rel):
     home, reg = world
     write(home, rel, "#!/bin/sh\n")
     subprocess.run(["git", "-C", str(home), "add", "-f", rel], check=True)
-    subprocess.run(["git", "-C", str(home), "update-index", "--chmod=-x", rel], check=True)
+    subprocess.run(
+        ["git", "-C", str(home), "update-index", "--chmod=-x", rel], check=True
+    )
     by, cells = states(home, reg)
     assert all(by[h, "config"].state == doctor.DRIFT for h in doctor.HARNESSES)
-    subprocess.run(["git", "-C", str(home), "update-index", "--chmod=+x", rel], check=True)
+    subprocess.run(
+        ["git", "-C", str(home), "update-index", "--chmod=+x", rel], check=True
+    )
     by, cells = states(home, reg)
     assert all(by[h, "config"].state != doctor.DRIFT for h in doctor.HARNESSES)
 
@@ -244,7 +274,11 @@ def test_repo_only_needs_no_live_files(world):
     shutil.rmtree(home / ".agents/skills")
     by, cells = states(home, reg, None, repo_only=True)
     assert by["cline", "mcp"].state == doctor.NA
-    assert all(by[h, "skills"].state == doctor.NA for h in doctor.HARNESSES if "na" not in reg[h]["skills"])
+    assert all(
+        by[h, "skills"].state == doctor.NA
+        for h in doctor.HARNESSES
+        if "na" not in reg[h]["skills"]
+    )
     assert doctor.exit_code(cells) == 0
 
 
@@ -256,7 +290,10 @@ def test_json_output_lists_25_cells(world, capsys):
 
 
 def test_jsonc_dialects():
-    assert jsonc.parse('{"u": "http://x", // c\n "a": [1,],}', strict=False) == {"u": "http://x", "a": [1]}
+    assert jsonc.parse('{"u": "http://x", // c\n "a": [1,],}', strict=False) == {
+        "u": "http://x",
+        "a": [1],
+    }
     with pytest.raises(jsonc.JsonError):
         jsonc.parse('{"a": 1, // c\n}', strict=True)
     with pytest.raises(jsonc.JsonError, match="duplicate key 'k'"):

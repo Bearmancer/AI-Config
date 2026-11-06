@@ -40,26 +40,26 @@ function inspectPythonPathlib(path: string, content: string, existing = ""): voi
 
   if (hasFileOps && !importsPathlib) {
     throw new Error(
-      `[Policy Violation: python-pathlib-guard]\n` +
-        `Python script '${path}' performs file/path operations but does not import 'pathlib'.\n` +
-        `Raw string path operations are forbidden due to Windows backslash parsing traps.\n\n` +
-        `Remediation:\n` +
-        `1. Import Path: from pathlib import Path\n` +
-        `2. Read files: Path(p).read_text(encoding="utf-8")\n` +
-        `3. Write files: Path(p).write_text(content, encoding="utf-8")\n` +
-        `4. Paths: Use Path(r'C:\\...') or forward slashes Path('C:/...')`
+      `[Policy Violation: python-pathlib-guard]\n`
+        + `Python script '${path}' performs file/path operations but does not import 'pathlib'.\n`
+        + `Raw string path operations are forbidden due to Windows backslash parsing traps.\n\n`
+        + `Remediation:\n`
+        + `1. Import Path: from pathlib import Path\n`
+        + `2. Read files: Path(p).read_text(encoding="utf-8")\n`
+        + `3. Write files: Path(p).write_text(content, encoding="utf-8")\n`
+        + `4. Paths: Use Path(r'C:\\...') or forward slashes Path('C:/...')`,
     );
   }
 
   if (hasBareOpen) {
     throw new Error(
-      `[Policy Violation: python-pathlib-guard]\n` +
-        `Python script '${path}' uses bare 'open()'. Use 'pathlib.Path' methods with explicit UTF-8 encoding.\n` +
-        `Bare open() calls without explicit encoding suffer from Windows UTF-16LE / cp1252 corruption.\n\n` +
-        `Remediation:\n` +
-        `1. Read files: Path(p).read_text(encoding="utf-8")\n` +
-        `2. Write files: Path(p).write_text(content, encoding="utf-8")\n` +
-        `3. Or stream: Path(p).open("r", encoding="utf-8")`
+      `[Policy Violation: python-pathlib-guard]\n`
+        + `Python script '${path}' uses bare 'open()'. Use 'pathlib.Path' methods with explicit UTF-8 encoding.\n`
+        + `Bare open() calls without explicit encoding suffer from Windows UTF-16LE / cp1252 corruption.\n\n`
+        + `Remediation:\n`
+        + `1. Read files: Path(p).read_text(encoding="utf-8")\n`
+        + `2. Write files: Path(p).write_text(content, encoding="utf-8")\n`
+        + `3. Or stream: Path(p).open("r", encoding="utf-8")`,
     );
   }
 }
@@ -77,24 +77,22 @@ function inspectToolInput(tool: string, input: unknown): void {
   const record = input as Record<string, unknown>;
 
   // OpenCode 1 names the path `filePath`; OpenCode 2 renamed it to `path`. Both accepted.
-  const filePath =
-    typeof record.filePath === "string"
-      ? record.filePath
-      : typeof record.path === "string"
-      ? record.path
-      : "";
+  const filePath = typeof record.filePath === "string"
+    ? record.filePath
+    : typeof record.path === "string"
+    ? record.path
+    : "";
   if (!filePath.endsWith(".py")) return;
 
-  const content =
-    tool === "write"
-      ? typeof record.content === "string"
-        ? record.content
-        : ""
-      : tool === "edit"
-      ? typeof record.newString === "string"
-        ? record.newString
-        : ""
-      : "";
+  const content = tool === "write"
+    ? typeof record.content === "string"
+      ? record.content
+      : ""
+    : tool === "edit"
+    ? typeof record.newString === "string"
+      ? record.newString
+      : ""
+    : "";
 
   inspectPythonPathlib(filePath, content, tool === "edit" ? readExisting(filePath) : "");
 }
@@ -107,7 +105,7 @@ interface ToolExecuteBeforeEvent {
 interface ToolDomainLike {
   hook: (
     name: string,
-    callback: (event: ToolExecuteBeforeEvent) => void | Promise<void>
+    callback: (event: ToolExecuteBeforeEvent) => void | Promise<void>,
   ) => Promise<unknown>;
 }
 

@@ -38,6 +38,7 @@
 - Put a decision question to the user with the question tool: two to four options, the recommended one first.
 
 <!-- CODEGRAPH_START -->
+
 ## CodeGraph
 
 In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the repo root), reach for it BEFORE grep/find or reading files when you need to understand or locate code:
@@ -46,6 +47,7 @@ In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the re
 - **Shell** (always works): `codegraph explore "<symbol names or question>"` prints the same output.
 
 If there is no `.codegraph/` directory, skip CodeGraph entirely; indexing is the user's decision.
+
 <!-- CODEGRAPH_END -->
 
 ## Agent skills

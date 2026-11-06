@@ -26,10 +26,19 @@ config_dir="$HOME/.config/ai-config"
 report="$repo/live-vs-repo.diff"
 
 for tool in git bws npx uv; do
-  command -v "$tool" >/dev/null || { echo "$tool is not on PATH" >&2; exit 1; }
+	command -v "$tool" >/dev/null || {
+		echo "$tool is not on PATH" >&2
+		exit 1
+	}
 done
-[ -n "${BWS_ACCESS_TOKEN:-}" ] || { echo "BWS_ACCESS_TOKEN is not set" >&2; exit 1; }
-[ ! -e "$repo/.git" ] || { echo "$repo already exists; setup is one-shot" >&2; exit 1; }
+[ -n "${BWS_ACCESS_TOKEN:-}" ] || {
+	echo "BWS_ACCESS_TOKEN is not set" >&2
+	exit 1
+}
+[ ! -e "$repo/.git" ] || {
+	echo "$repo already exists; setup is one-shot" >&2
+	exit 1
+}
 
 # 1. Clone without a checkout and point the worktree at $HOME.
 git clone --no-checkout --branch "$branch" -- "$remote" "$repo"
@@ -40,7 +49,10 @@ git -C "$repo" config core.hooksPath "$config_dir/hooks"
 # 2. Report how the live files differ from the repo, then take the repo's version.
 git -C "$repo" read-tree HEAD
 # The diff can contain secrets: create the report owner-only.
-(umask 077; git -C "$repo" diff >"$report")
+(
+	umask 077
+	git -C "$repo" diff >"$report"
+)
 echo "Live-file diff saved to $report (it may contain secrets; delete it after review)."
 git -C "$repo" checkout -f --end-of-options "$branch"
 
@@ -177,10 +189,11 @@ PY
 # text=auto repo (firecrawl/skills) is checked out with native CRLF unless core.eol=lf. These
 # env vars set both for the npx processes only; no git config file is touched.
 (
-  cd "$HOME"
-  export GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=core.autocrlf GIT_CONFIG_VALUE_0=false GIT_CONFIG_KEY_1=core.eol GIT_CONFIG_VALUE_1=lf
-  npx --yes skills experimental_install
-  mapfile -t pairs < <(uv run --no-project python - <<'PY'
+	cd "$HOME"
+	export GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=core.autocrlf GIT_CONFIG_VALUE_0=false GIT_CONFIG_KEY_1=core.eol GIT_CONFIG_VALUE_1=lf
+	npx --yes skills experimental_install
+	mapfile -t pairs < <(
+		uv run --no-project python - <<'PY'
 import json
 from pathlib import Path
 
@@ -190,11 +203,11 @@ for name, entry in json.loads((Path.home() / "skills-lock.json").read_text("utf-
         raise SystemExit(f"skills-lock.json: refusing option-like source or name for {name!r}")
     print(entry["source"], name, sep="\t")
 PY
-  )
-  for pair in "${pairs[@]}"; do
-    IFS=$'\t' read -r source name <<<"$pair"
-    npx --yes skills add "$source" -s "$name" -a claude-code -y </dev/null
-  done
+	)
+	for pair in "${pairs[@]}"; do
+		IFS=$'\t' read -r source name <<<"$pair"
+		npx --yes skills add "$source" -s "$name" -a claude-code -y </dev/null
+	done
 )
 
 [ "$rc" -eq 0 ] || exit "$rc"

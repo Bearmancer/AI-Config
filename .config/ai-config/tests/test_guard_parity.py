@@ -22,8 +22,17 @@ def verdicts():
     bun = shutil.which("bun")
     assert bun, "bun is required to run the guard parity script"
     done = subprocess.run(
-        [bun, str(TESTS / "guard_parity.ts"), str(ROOT), str(TESTS / "guard_parity_cases.json")],
-        capture_output=True, text=True, encoding="utf-8", check=False, timeout=120,
+        [
+            bun,
+            str(TESTS / "guard_parity.ts"),
+            str(ROOT),
+            str(TESTS / "guard_parity_cases.json"),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+        timeout=120,
     )
     assert done.returncode == 0, done.stderr
     return json.loads(done.stdout)
@@ -39,4 +48,6 @@ def test_same_verdict_as_opencode(verdicts, case):
     else:
         assert MARKERS[case["expect"]] in got["opencode"]
         if case["expect"] != "pathlib":
-            assert got["opencode"].startswith("[Policy Violation: forbidden-terminal-commands]")
+            assert got["opencode"].startswith(
+                "[Policy Violation: forbidden-terminal-commands]"
+            )

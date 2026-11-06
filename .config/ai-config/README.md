@@ -43,13 +43,13 @@ uv run --no-project --with pytest pytest -q ~/.config/ai-config/tests
 
 ## Where each surface lives
 
-| surface | live file | who writes it |
-| --- | --- | --- |
-| instructions | `~/.agents/AGENTS.md`, the only instruction content | git |
-| MCP servers | `~/.omo/agent/mcp.json`, `~/.config/opencode/opencode.jsonc`, `~/.config/kilo/kilo.jsonc`; untracked: `~/.cline/data/settings/cline_mcp_settings.json`, `~/.claude.json` | git for the first three, the setup script for the last two |
-| skills | `~/.agents/skills` and `~/.claude/skills`, both matching `~/skills-lock.json` | `npx skills` |
-| config | the files each harness table in `harnesses.toml` names | git, and the app when it rewrites its own file in place |
-| secrets | per-PC user environment variables | the setup script, from bws |
+| surface      | live file                                                                                                                                                                | who writes it                                              |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| instructions | `~/.agents/AGENTS.md`, the only instruction content                                                                                                                      | git                                                        |
+| MCP servers  | `~/.omo/agent/mcp.json`, `~/.config/opencode/opencode.jsonc`, `~/.config/kilo/kilo.jsonc`; untracked: `~/.cline/data/settings/cline_mcp_settings.json`, `~/.claude.json` | git for the first three, the setup script for the last two |
+| skills       | `~/.agents/skills` and `~/.claude/skills`, both matching `~/skills-lock.json`                                                                                            | `npx skills`                                               |
+| config       | the files each harness table in `harnesses.toml` names                                                                                                                   | git, and the app when it rewrites its own file in place    |
+| secrets      | per-PC user environment variables                                                                                                                                        | the setup script, from bws                                 |
 
 Never tracked: `~/.claude.json`, `~/.cline/data/**`, the Magic Context database, and any file holding a literal secret.
 

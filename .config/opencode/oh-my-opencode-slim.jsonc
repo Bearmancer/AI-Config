@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
   "disabled_agents": [],
   "compactSidebar": true,
@@ -20,181 +20,96 @@
   // Root preset = zero-cost default. Switch presets per session; no edit needed.
   "preset": "default-free",
   "presets": {
-    // Zero-cost: Zen free first, OpenCode Go last.
+    // Free-first: free Zen models, Alibaba qwen3.8-flash as the only fallback. CommandCode exposes no free model in the live registry.
     "default-free": {
       "orchestrator": {
-        "model": [
-          "opencode/glm-5.3-flash-free",
-          "opencode-go/muse-spark-1.3-contributor"
-        ],
-        "skills": [
-          "*"
-        ]
+        "model": ["opencode/glm-5.3-flash-free", "alibaba-token-plan/qwen3.8-flash"],
+        "skills": ["*"]
       },
       "oracle": {
-        "model": [
-          "opencode/glm-5.3-flash-free",
-          "opencode-go/muse-spark-1.3-contributor"
-        ],
-        "skills": [
-          "simplify"
-        ]
+        "model": ["opencode/glm-5.3-flash-free", "alibaba-token-plan/qwen3.8-flash"],
+        "skills": ["simplify"]
       },
       "designer": {
-        "model": [
-          "opencode/deepseek-v4.1-flash-free",
-          "opencode-go/muse-spark-1.3-contributor"
-        ],
+        "model": ["opencode/deepseek-v4.1-flash-free", "alibaba-token-plan/qwen3.8-flash"],
         "skills": []
       },
-      // Lowest workers (explorer, fixer, observer): free Zen at index 0, free Go at index 1.
       "explorer": {
-        "model": [
-          "opencode/mimo-v2.6-flash-free",
-          "opencode-go/beam-free",
-          "opencode-go/muse-spark-1.3-contributor"
-        ],
+        "model": ["opencode/mimo-v2.6-flash-free", "alibaba-token-plan/qwen3.8-flash"],
         "skills": []
       },
       "fixer": {
-        "model": [
-          "opencode/mimo-v2.6-flash-free",
-          "opencode-go/beam-free",
-          "opencode-go/muse-spark-1.3-contributor"
-        ],
+        "model": ["opencode/mimo-v2.6-flash-free", "alibaba-token-plan/qwen3.8-flash"],
         "skills": []
       },
       "observer": {
-        "model": [
-          "opencode/mimo-v2.6-flash-free",
-          "opencode-go/beam-free",
-          "opencode-go/muse-spark-1.3-contributor"
-        ],
+        "model": ["opencode/mimo-v2.6-flash-free", "alibaba-token-plan/qwen3.8-flash"],
         "skills": []
       },
       "council": {
-        "model": [
-          "opencode/glm-5.3-flash-free",
-          "opencode-go/muse-spark-1.3-contributor"
-        ],
+        "model": ["opencode/glm-5.3-flash-free", "alibaba-token-plan/qwen3.8-flash"],
         "skills": []
       }
     },
-    // Anthropic: led by the claude-agent provider (sonnet/haiku aliases resolve to claude-sonnet-5-5 / claude-haiku-5-5). Claude 5.5 family only. Lowest workers keep two free rungs first; OpenCode Go is last in every seat.
+    // Anthropic: Claude first (sonnet/haiku aliases resolve to Claude 5.5), Alibaba qwen3.8-flash as the only fallback.
     "anthropic": {
       "orchestrator": {
-        "model": [
-          "claude-agent/sonnet",
-          "opencode-go/claude-haiku-5-5"
-        ],
-        "skills": [
-          "*"
-        ]
+        "model": ["claude-agent/sonnet", "alibaba-token-plan/qwen3.8-flash"],
+        "skills": ["*"]
       },
       "oracle": {
-        "model": [
-          "claude-agent/sonnet",
-          "opencode-go/claude-haiku-5-5"
-        ],
-        "skills": [
-          "simplify"
-        ]
+        "model": ["claude-agent/sonnet", "alibaba-token-plan/qwen3.8-flash"],
+        "skills": ["simplify"]
       },
       "designer": {
-        "model": [
-          "claude-agent/sonnet",
-          "opencode-go/claude-haiku-5-5"
-        ],
+        "model": ["claude-agent/sonnet", "alibaba-token-plan/qwen3.8-flash"],
         "skills": []
       },
       "explorer": {
-        "model": [
-          "opencode/mimo-v2.6-flash-free",
-          "opencode-go/beam-free",
-          "claude-agent/haiku",
-          "opencode-go/claude-haiku-5-5"
-        ],
+        "model": ["claude-agent/haiku", "alibaba-token-plan/qwen3.8-flash"],
         "skills": []
       },
       "fixer": {
-        "model": [
-          "opencode/mimo-v2.6-flash-free",
-          "opencode-go/beam-free",
-          "claude-agent/haiku",
-          "opencode-go/claude-haiku-5-5"
-        ],
+        "model": ["claude-agent/haiku", "alibaba-token-plan/qwen3.8-flash"],
         "skills": []
       },
       "observer": {
-        "model": [
-          "opencode/mimo-v2.6-flash-free",
-          "opencode-go/beam-free",
-          "claude-agent/haiku",
-          "opencode-go/claude-haiku-5-5"
-        ],
+        "model": ["claude-agent/haiku", "alibaba-token-plan/qwen3.8-flash"],
         "skills": []
       }
     },
-    // Task mix: Alibaba token plan for judgment, free rungs first for the lowest workers, OpenCode Go last.
+    // Paid: CommandCode first (Muse for judgment, DeepSeek v4.1 for build/design), Alibaba qwen3.8-flash as the only fallback.
     "paid-mix": {
       "orchestrator": {
-        "model": [
-          "alibaba-token-plan/deepseek-v4.1-flash-1017",
-          "opencode-go/deepseek-v4.1-flash"
-        ],
-        "skills": [
-          "*"
-        ]
+        "model": ["commandcode/deepseek/deepseek-v4.1-flash", "alibaba-token-plan/qwen3.8-flash"],
+        "skills": ["*"]
       },
       "oracle": {
-        "model": [
-          "alibaba-token-plan/deepseek-v4-pro",
-          "opencode-go/deepseek-v4-pro"
-        ],
-        "skills": [
-          "simplify"
-        ]
+        "model": ["commandcode/meta/muse-spark-1.3-contributor", "alibaba-token-plan/qwen3.8-flash"],
+        "skills": ["simplify"]
       },
       "designer": {
-        "model": [
-          "alibaba-token-plan/deepseek-v4.1-flash-1017",
-          "opencode-go/deepseek-v4.1-flash"
-        ],
+        "model": ["commandcode/deepseek/deepseek-v4.1-flash", "alibaba-token-plan/qwen3.8-flash"],
         "skills": []
       },
       "explorer": {
-        "model": [
-          "opencode/mimo-v2.6-flash-free",
-          "opencode-go/beam-free",
-          "alibaba-token-plan/qwen3.8-flash",
-          "opencode-go/muse-spark-1.3-contributor"
-        ],
+        "model": ["commandcode/meta/muse-spark-1.3-contributor", "alibaba-token-plan/qwen3.8-flash"],
         "skills": []
       },
       "fixer": {
-        "model": [
-          "opencode/mimo-v2.6-flash-free",
-          "opencode-go/beam-free",
-          "alibaba-token-plan/deepseek-v4.1-flash-1017",
-          "opencode-go/deepseek-v4.1-flash"
-        ],
+        "model": ["commandcode/deepseek/deepseek-v4.1-flash", "alibaba-token-plan/qwen3.8-flash"],
         "skills": []
       },
       "observer": {
-        "model": [
-          "opencode/mimo-v2.6-flash-free",
-          "opencode-go/beam-free",
-          "alibaba-token-plan/qwen3.8-flash",
-          "opencode-go/muse-spark-1.3-contributor"
-        ],
+        "model": ["commandcode/meta/muse-spark-1.3-contributor", "alibaba-token-plan/qwen3.8-flash"],
         "skills": []
       }
     }
   },
   "council": {
-    "default_preset": "default",
+    "default_preset": "commandcode-council",
     "presets": {
-      "default": {
+      "qwen-council": {
         "alpha": {
           "model": ["alibaba-token-plan/qwen3.8-flash"],
           "prompt": "You are Councillor Alpha, specialized in Code Quality, Implementation Cleanliness, and Syntax Standards. You evaluate code clarity, maintainability, type correctness, edge cases, and unit test coverage."
@@ -215,8 +130,34 @@
           "model": ["alibaba-token-plan/qwen3.8-flash"],
           "prompt": "You are Councillor Epsilon, specialized in Product UX, Developer Experience, API Ergonomics, and Trade-off Synthesis. You balance complexity against practical utility and reconcile engineering proposals into clear action items."
         }
+      },
+      "commandcode-council": {
+        "alpha": {
+          "model": ["commandcode/meta/muse-spark-1.3-contributor", "alibaba-token-plan/qwen3.8-flash"],
+          "variant": "high",
+          "prompt": "You are Councillor Alpha, the Skill Cartographer. Read the nine OMC skill files and the current rigorous-planning contract, phases, methods and planning.mjs. For each source skill, inventory only the features that are unique or materially stronger than rigorous-planning, with exact file and line evidence. Separate planning features from execution-only features; ultragoal counts as planning-only. Mark each feature ASSIMILATE, ALREADY PRESENT, or DO NOT ASSIMILATE, and name the closest current phase or gate. Do not propose implementation detail yet; produce the evidence table the other seats work from."
+        },
+        "beta": {
+          "model": ["commandcode/meta/muse-spark-1.3-contributor", "alibaba-token-plan/qwen3.8-flash"],
+          "variant": "high",
+          "prompt": "You are Councillor Beta, the Railroad Architect. Using the cartographer's feature table, or reconstructing it from the source files, map every ASSIMILATE candidate onto the linear railroad W0 -> P0 -> P1 -> P2 -> P3 -> P4 -> P5 -> P6. For each, name the exact phase, entry and exit gate, persisted artifact or row, CLI command or flag, render target, and test that proves it. Preserve linearity, fail-closed publish, and one meaning one home. Reject any proposal that needs a branch outside the existing W0 wayfinder branch or that adds a gate the script cannot derive."
+        },
+        "gamma": {
+          "model": ["commandcode/meta/muse-spark-1.3-contributor", "alibaba-token-plan/qwen3.8-flash"],
+          "variant": "high",
+          "prompt": "You are Councillor Gamma, the Determinism Auditor. For every proposed assimilation, classify the check as HARD, GAMEABLE, or SEMANTIC. HARD means a persisted row, a resolvable file or hash, a captured exit status, or an owner token with a quote. Reject SEMANTIC and replace GAMEABLE with a concrete deterministic check. Name the exact gate function and test case that would fail on the bad ledger. Flag any proposal that merely copies prose from a source skill or that lets a model self-report completion."
+        },
+        "delta": {
+          "model": ["commandcode/meta/muse-spark-1.3-contributor", "alibaba-token-plan/qwen3.8-flash"],
+          "variant": "high",
+          "prompt": "You are Councillor Delta, the Red Team. Attack the assimilation: find duplicate features across the nine skills, conflicts with the current rigorous-planning contract, gates that would break existing evals, phases that would stop being linear, and features that are unique but not worth the complexity. Identify any unique feature the other seats missed, and any feature that should be explicitly rejected so it does not creep in later. Compare against the current G0-G5 and G_WF behavior and cite lines."
+        },
+        "epsilon": {
+          "model": ["commandcode/meta/muse-spark-1.3-contributor", "alibaba-token-plan/qwen3.8-flash"],
+          "variant": "high",
+          "prompt": "You are Councillor Epsilon, the Assimilation Synthesizer. Reconcile the cartography, railroad, determinism and red-team findings into one ranked assimilation proposal. For each accepted feature give: source skill, unique capability, target phase, artifact or row, CLI surface, gate id, hard evidence, test, and migration order. Include a short DO NOT ASSIMILATE list with reasons. Prefer the smallest set of new gates that covers the most unique capability; no implementation, no code, no semantic checks."
+        }
       }
     }
   }
 }
-

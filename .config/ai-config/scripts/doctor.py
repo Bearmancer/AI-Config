@@ -38,16 +38,41 @@ _PRIORITY = (MISSING, DRIFT, UNKNOWN)
 # MCP stanza dialects. `off` is the (key, value) that disables a server; claude
 # has no per-server disable flag, so its file holds the enabled set only.
 SHAPES = {
-    "omo": dict(cmd="str", env="env", off=("enabled", False), type=None,
-                allowed={"command", "args", "env", "enabled"}),
-    "opencode": dict(cmd="list", env="environment", off=("disabled", True), type="local",
-                     allowed={"type", "command", "environment", "disabled"}),
-    "kilo": dict(cmd="list", env="environment", off=("enabled", False), type="local",
-                 allowed={"type", "command", "environment", "enabled"}),
-    "cline": dict(cmd="str", env="env", off=("disabled", True), type=None,
-                  allowed={"command", "args", "env", "disabled"}),
-    "claude": dict(cmd="str", env="env", off=None, type="stdio",
-                   allowed={"type", "command", "args", "env"}),
+    "omo": dict(
+        cmd="str",
+        env="env",
+        off=("enabled", False),
+        type=None,
+        allowed={"command", "args", "env", "enabled"},
+    ),
+    "opencode": dict(
+        cmd="list",
+        env="environment",
+        off=("disabled", True),
+        type="local",
+        allowed={"type", "command", "environment", "disabled"},
+    ),
+    "kilo": dict(
+        cmd="list",
+        env="environment",
+        off=("enabled", False),
+        type="local",
+        allowed={"type", "command", "environment", "enabled"},
+    ),
+    "cline": dict(
+        cmd="str",
+        env="env",
+        off=("disabled", True),
+        type=None,
+        allowed={"command", "args", "env", "disabled"},
+    ),
+    "claude": dict(
+        cmd="str",
+        env="env",
+        off=None,
+        type="stdio",
+        allowed={"type", "command", "args", "env"},
+    ),
 }
 SERVERS_AT = {"omo": "mcpServers", "cline": "mcpServers", "claude": "mcpServers"}
 IMPORT_LINE_FILE = ".claude/CLAUDE.md"
@@ -70,7 +95,10 @@ SKILL_TWIN_ROOTS = {
 FIXED_TRACKED = (".gitignore", "skills-lock.json", ".claude/CLAUDE.md")
 FIXED_TRACKED_PREFIXES = (".config/ai-config/", ".github/")
 # Git skips a hook without the exec bit on Linux/macOS; Windows hides the bit, so the index is checked.
-EXECUTABLE_TRACKED = (".config/ai-config/hooks/pre-commit", ".config/ai-config/scripts/setup.sh")
+EXECUTABLE_TRACKED = (
+    ".config/ai-config/hooks/pre-commit",
+    ".config/ai-config/scripts/setup.sh",
+)
 BACKUP_SUFFIXES = (".bak", ".orig", ".old")
 BARE_COMMAND = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 BAD_COMMAND_SUFFIXES = (".exe", ".cmd", ".bat", ".ps1", ".sh")
@@ -91,7 +119,9 @@ class Cell:
 
 
 class Ctx:
-    def __init__(self, home: Path, registry: dict, env: Mapping | None, repo_only: bool):
+    def __init__(
+        self, home: Path, registry: dict, env: Mapping | None, repo_only: bool
+    ):
         self.home = home
         self.reg = registry
         self.env = env
@@ -148,8 +178,12 @@ class Ctx:
             else ["git", "-C", str(self.home)]
         )
         return subprocess.run(
-            [*base, *args], capture_output=True, text=True, timeout=60,
-            stdin=subprocess.DEVNULL, check=False,
+            [*base, *args],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            stdin=subprocess.DEVNULL,
+            check=False,
         )
 
 
@@ -157,7 +191,9 @@ class Ctx:
 
 
 def _ref_regex(env_ref: str) -> re.Pattern:
-    return re.compile("^" + re.escape(env_ref).replace("VAR", "([A-Z][A-Z0-9_]*)") + "$")
+    return re.compile(
+        "^" + re.escape(env_ref).replace("VAR", "([A-Z][A-Z0-9_]*)") + "$"
+    )
 
 
 def servers_of(ctx: Ctx, harness: str, obj: object) -> dict | None:
@@ -187,20 +223,30 @@ def shape_problems(ctx: Ctx, harness: str, name: str, stanza: object) -> list[st
         out.append(f"{name}: type must be '{shape['type']}'")
     command = stanza.get("command")
     if shape["cmd"] == "list":
-        ok = isinstance(command, list) and command and all(isinstance(c, str) for c in command)
+        ok = (
+            isinstance(command, list)
+            and command
+            and all(isinstance(c, str) for c in command)
+        )
         parts = command if ok else []
         binary, rest = (parts[0], parts[1:]) if parts else (None, [])
     else:
         ok = isinstance(command, str)
         args = stanza.get("args", [])
-        rest = args if isinstance(args, list) and all(isinstance(a, str) for a in args) else None
+        rest = (
+            args
+            if isinstance(args, list) and all(isinstance(a, str) for a in args)
+            else None
+        )
         binary = command if ok else None
         if rest is None:
             out.append(f"{name}: args must be a list of strings")
             rest = []
     if not ok:
         out.append(f"{name}: command has the wrong type for the {harness} shape")
-    elif not BARE_COMMAND.match(binary) or binary.lower().endswith(BAD_COMMAND_SUFFIXES):
+    elif not BARE_COMMAND.match(binary) or binary.lower().endswith(
+        BAD_COMMAND_SUFFIXES
+    ):
         out.append(f"{name}: command is not a bare binary name")
     for arg in rest:
         if arg.startswith("~") or re.match(r"^([A-Za-z]:[\\/]|/)", arg):
@@ -236,13 +282,17 @@ def env_refs(ctx: Ctx, harness: str, servers: dict) -> set[str]:
 def _skip_untracked(ctx: Ctx, spec: dict, cell: Cell) -> bool:
     if ctx.repo_only and not spec.get("tracked"):
         cell.state = NA
-        cell.reasons.append("repo-only run: the file is app-owned and lives only on a PC")
+        cell.reasons.append(
+            "repo-only run: the file is app-owned and lives only on a PC"
+        )
         return True
     return False
 
 
 def _has_content(path: Path) -> bool:
-    return path.is_file() and bool(path.read_text(encoding="utf-8", errors="replace").strip())
+    return path.is_file() and bool(
+        path.read_text(encoding="utf-8", errors="replace").strip()
+    )
 
 
 def check_instructions(ctx: Ctx, h: str) -> Cell:
@@ -266,13 +316,19 @@ def check_instructions(ctx: Ctx, h: str) -> Cell:
         for state, reason in problems:
             cell.add(state, reason)
         if obj is not None and obj.get("instructions") != [spec["path"]]:
-            cell.add(DRIFT, f"instructions in {ctx.reg[h]['mcp']['path']} is not [{spec['path']}]")
+            cell.add(
+                DRIFT,
+                f"instructions in {ctx.reg[h]['mcp']['path']} is not [{spec['path']}]",
+            )
     if h == "claude":
         link = ctx.home / IMPORT_LINE_FILE
         if not link.is_file():
             cell.add(MISSING, f"absent: ~/{IMPORT_LINE_FILE}")
         elif link.read_text(encoding="utf-8").strip() != f"@{spec['path']}":
-            cell.add(DRIFT, f"~/{IMPORT_LINE_FILE} is not the single import line @{spec['path']}")
+            cell.add(
+                DRIFT,
+                f"~/{IMPORT_LINE_FILE} is not the single import line @{spec['path']}",
+            )
     return cell
 
 
@@ -291,18 +347,27 @@ def check_mcp(ctx: Ctx, h: str) -> Cell:
         return cell
     servers = servers_of(ctx, h, obj)
     if servers is None:
-        cell.add(DRIFT, f"no server table at '{spec.get('servers_at') or SERVERS_AT.get(h)}' in {spec['path']}")
+        cell.add(
+            DRIFT,
+            f"no server table at '{spec.get('servers_at') or SERVERS_AT.get(h)}' in {spec['path']}",
+        )
         return cell
     for name, stanza in servers.items():
         for reason in shape_problems(ctx, h, name, stanza):
             cell.add(DRIFT, reason)
     wanted = set(ctx.reg["shared"]["enabled_servers"])
-    enabled = {n for n, s in servers.items() if isinstance(s, dict) and is_enabled(h, s)}
+    enabled = {
+        n for n, s in servers.items() if isinstance(s, dict) and is_enabled(h, s)
+    }
     if enabled != wanted:
-        cell.add(DRIFT, f"enabled servers are {sorted(enabled)}, expected {sorted(wanted)}")
+        cell.add(
+            DRIFT, f"enabled servers are {sorted(enabled)}, expected {sorted(wanted)}"
+        )
     if SHAPES[h]["off"] is None:
         if set(servers) != wanted:
-            cell.add(DRIFT, f"server set is {sorted(servers)}, expected {sorted(wanted)}")
+            cell.add(
+                DRIFT, f"server set is {sorted(servers)}, expected {sorted(wanted)}"
+            )
     elif h != "opencode":
         ref_obj, ref_problems = ctx.read_json(ctx.reg["opencode"]["mcp"])
         ref = servers_of(ctx, "opencode", ref_obj) if ref_obj is not None else None
@@ -331,7 +396,10 @@ def check_skills(ctx: Ctx, h: str) -> Cell:
         cell.add(DRIFT, f"~/skills-lock.json: {exc}")
         return cell
     if ctx.repo_only:
-        cell.state, cell.reasons = NA, ["repo-only run: the installed skills live only on a PC"]
+        cell.state, cell.reasons = (
+            NA,
+            ["repo-only run: the installed skills live only on a PC"],
+        )
         return cell
     root = ctx.path(spec["path"])
     if not root.is_dir():
@@ -341,7 +409,10 @@ def check_skills(ctx: Ctx, h: str) -> Cell:
     present = {p.name for p in root.iterdir() if not p.name.startswith(".")} - ignored
     absent = sorted(n for n in names if not (root / n / "SKILL.md").is_file())
     if absent:
-        cell.add(DRIFT, f"{len(absent)} lock skills missing from {spec['path']}: {', '.join(absent[:5])}")
+        cell.add(
+            DRIFT,
+            f"{len(absent)} lock skills missing from {spec['path']}: {', '.join(absent[:5])}",
+        )
     for stale in sorted(present - names):
         cell.add(DRIFT, f"stale skill not in lock: {stale}; purge it")
     agents_root = os.path.normcase(os.path.realpath(root))
@@ -353,12 +424,17 @@ def check_skills(ctx: Ctx, h: str) -> Cell:
         for stale in sorted(e.name for e in entries if e.name not in names):
             cell.add(DRIFT, f"stale skill not in lock: ~/{twin_rel}/{stale}; purge it")
         twins = [
-            e.name for e in entries
+            e.name
+            for e in entries
             if e.name in names
-            and not os.path.normcase(os.path.realpath(e)).startswith(agents_root + os.sep)
+            and not os.path.normcase(os.path.realpath(e)).startswith(
+                agents_root + os.sep
+            )
         ]
         if twins:
-            cell.add(DRIFT, f"twin copies under ~/{twin_rel}: {', '.join(sorted(twins)[:5])}")
+            cell.add(
+                DRIFT, f"twin copies under ~/{twin_rel}: {', '.join(sorted(twins)[:5])}"
+            )
     if h == "omo":
         _omo_skill_filter(ctx, cell, present)
     return cell
@@ -368,15 +444,23 @@ def _omo_skill_filter(ctx: Ctx, cell: Cell, present: set) -> None:
     # omo.jsonc disabled_skills filters bundled skills only; the core
     # filter for ~/.agents/skills is `skills` in agent/settings.jsonc.
     try:
-        omo_cfg = jsonc.parse((ctx.home / ".omo/omo.jsonc").read_text(encoding="utf-8"), strict=False)
-        core_cfg = jsonc.parse((ctx.home / ".omo/agent/settings.jsonc").read_text(encoding="utf-8"), strict=False)
+        omo_cfg = jsonc.parse(
+            (ctx.home / ".omo/omo.jsonc").read_text(encoding="utf-8"), strict=False
+        )
+        core_cfg = jsonc.parse(
+            (ctx.home / ".omo/agent/settings.jsonc").read_text(encoding="utf-8"),
+            strict=False,
+        )
     except (OSError, jsonc.JsonError, TypeError, AttributeError) as exc:
         cell.add(DRIFT, f"omo skill filter unreadable: {exc}")
         return
     patterns = set(core_cfg.get("skills") or ())
     for name in sorted(set(omo_cfg.get("disabled_skills") or ()) & present):
         if not patterns & {f"!**/{name}", f"!{name}", f"!**/{name}/**"}:
-            cell.add(DRIFT, f'disabled skill visible in omo: {name}; add "!**/{name}" to ~/.omo/agent/settings.jsonc skills')
+            cell.add(
+                DRIFT,
+                f'disabled skill visible in omo: {name}; add "!**/{name}" to ~/.omo/agent/settings.jsonc skills',
+            )
 
 
 def _config_files(ctx: Ctx, h: str):
@@ -386,12 +470,22 @@ def _config_files(ctx: Ctx, h: str):
         if path.is_dir():
             for inner in sorted(path.rglob("*")):
                 if inner.is_file():
-                    yield {**spec, "path": spec["path"] + "/" + inner.relative_to(path).as_posix()}, inner
+                    yield (
+                        {
+                            **spec,
+                            "path": spec["path"]
+                            + "/"
+                            + inner.relative_to(path).as_posix(),
+                        },
+                        inner,
+                    )
         else:
             yield spec, path
 
 
-def check_config(ctx: Ctx, h: str, tracked_set_problems: list[tuple[str | None, str]]) -> Cell:
+def check_config(
+    ctx: Ctx, h: str, tracked_set_problems: list[tuple[str | None, str]]
+) -> Cell:
     cell = Cell(h, "config")
     for spec in ctx.reg[h]["files"]:
         if _skip_untracked(ctx, spec, Cell(h, "config")):
@@ -405,7 +499,9 @@ def check_config(ctx: Ctx, h: str, tracked_set_problems: list[tuple[str | None, 
             continue
         for sibling in path.parent.glob(path.stem + ".*"):
             if sibling != path and {sibling.suffix, path.suffix} == {".json", ".jsonc"}:
-                cell.add(DRIFT, f"two files for one stem: {path.name} and {sibling.name}")
+                cell.add(
+                    DRIFT, f"two files for one stem: {path.name} and {sibling.name}"
+                )
         for suffix in BACKUP_SUFFIXES:
             if (path.parent / (path.name + suffix)).exists():
                 cell.add(DRIFT, f"backup artifact: {path.name}{suffix}")
@@ -444,8 +540,14 @@ def check_secrets(ctx: Ctx, h: str) -> Cell:
                 if not ctx.env_set(var):
                     cell.add(MISSING, f"env var not set in the user environment: {var}")
     for file_spec, path in _config_files(ctx, h):
-        if file_spec.get("tracked") and path.is_file() and file_spec["path"] != spec["path"]:
-            for finding in scan_text(file_spec["path"], path.read_text(encoding="utf-8", errors="replace")):
+        if (
+            file_spec.get("tracked")
+            and path.is_file()
+            and file_spec["path"] != spec["path"]
+        ):
+            for finding in scan_text(
+                file_spec["path"], path.read_text(encoding="utf-8", errors="replace")
+            ):
                 cell.add(DRIFT, f"literal secret: {finding}")
     return cell
 
@@ -460,7 +562,9 @@ def registry_tracked(ctx: Ctx) -> list[tuple[str, str]]:
             spec = ctx.reg[h][surface]
             if spec.get("tracked"):
                 out.append((h, ctx.rel(spec["path"])))
-        out += [(h, ctx.rel(s["path"])) for s in ctx.reg[h]["files"] if s.get("tracked")]
+        out += [
+            (h, ctx.rel(s["path"])) for s in ctx.reg[h]["files"] if s.get("tracked")
+        ]
     return out
 
 
@@ -483,26 +587,37 @@ def tracked_set_problems(ctx: Ctx) -> list[tuple[str | None, str]]:
             or any(path.startswith(e + "/") for e in exact)
         )
         if not covered:
-            problems.append((None, f"allowlisted in .gitignore but not in harnesses.toml: {path}"))
+            problems.append(
+                (None, f"allowlisted in .gitignore but not in harnesses.toml: {path}")
+            )
     for owner, rel in reg:
         target = ctx.home / rel
         if not target.exists():
             continue
         probe = rel + "/x" if target.is_dir() else rel
         if ctx.git("check-ignore", "-q", probe).returncode == 0:
-            problems.append((owner, f"in harnesses.toml but excluded by .gitignore: {rel}"))
+            problems.append(
+                (owner, f"in harnesses.toml but excluded by .gitignore: {rel}")
+            )
     for rel in EXECUTABLE_TRACKED:
         staged = ctx.git("ls-files", "-s", "--", rel)
         mode = staged.stdout.split(" ", 1)[0] if staged.returncode == 0 else ""
         if mode and mode != "100755":
-            problems.append((None, f"git index mode of {rel} is {mode}, must be 100755 (git update-index --chmod=+x)"))
+            problems.append(
+                (
+                    None,
+                    f"git index mode of {rel} is {mode}, must be 100755 (git update-index --chmod=+x)",
+                )
+            )
     return problems
 
 
 # --------------------------------------------------------------------- run
 
 
-def run(home: Path, registry: dict, env: Mapping | None = None, repo_only: bool = False) -> list[Cell]:
+def run(
+    home: Path, registry: dict, env: Mapping | None = None, repo_only: bool = False
+) -> list[Cell]:
     ctx = Ctx(home, registry, env, repo_only)
     try:
         set_problems = tracked_set_problems(ctx)
@@ -529,7 +644,9 @@ def run(home: Path, registry: dict, env: Mapping | None = None, repo_only: bool 
 def render(cells: list[Cell]) -> str:
     lines = [f"{'HARNESS':<9} {'SURFACE':<13} {'STATE':<8} DETAIL"]
     for c in cells:
-        lines.append(f"{c.harness:<9} {c.surface:<13} {c.state:<8} {c.reasons[0] if c.reasons else ''}")
+        lines.append(
+            f"{c.harness:<9} {c.surface:<13} {c.state:<8} {c.reasons[0] if c.reasons else ''}"
+        )
         lines += [f"{'':<32}{r}" for r in c.reasons[1:]]
     return "\n".join(lines)
 
@@ -539,24 +656,52 @@ def exit_code(cells: list[Cell]) -> int:
 
 
 def main(argv: list[str] | None = None, env: Mapping | None = None) -> int:
-    parser = argparse.ArgumentParser(description="ai-config doctor: 25-cell parity check")
-    parser.add_argument("--json", action="store_true", help="print JSON instead of the table")
-    parser.add_argument("--repo-only", action="store_true", help="check only what needs no live PC (CI)")
-    parser.add_argument("--home", type=Path, default=Path.home(), help="home folder to check")
+    parser = argparse.ArgumentParser(
+        description="ai-config doctor: 25-cell parity check"
+    )
+    parser.add_argument(
+        "--json", action="store_true", help="print JSON instead of the table"
+    )
+    parser.add_argument(
+        "--repo-only", action="store_true", help="check only what needs no live PC (CI)"
+    )
+    parser.add_argument(
+        "--home", type=Path, default=Path.home(), help="home folder to check"
+    )
     args = parser.parse_args(argv)
-    registry = tomllib.loads((CONFIG_DIR / "harnesses.toml").read_text(encoding="utf-8"))
+    registry = tomllib.loads(
+        (CONFIG_DIR / "harnesses.toml").read_text(encoding="utf-8")
+    )
     cells = run(args.home, registry, env, args.repo_only)
     code = exit_code(cells)
     if args.json:
-        print(json.dumps({
-            "mode": "repo-only" if args.repo_only else "live",
-            "exit": code,
-            "cells": [{"harness": c.harness, "surface": c.surface, "state": c.state, "reasons": c.reasons} for c in cells],
-        }, indent=2))
+        print(
+            json.dumps(
+                {
+                    "mode": "repo-only" if args.repo_only else "live",
+                    "exit": code,
+                    "cells": [
+                        {
+                            "harness": c.harness,
+                            "surface": c.surface,
+                            "state": c.state,
+                            "reasons": c.reasons,
+                        }
+                        for c in cells
+                    ],
+                },
+                indent=2,
+            )
+        )
     else:
         print(render(cells))
-        counts = {s: sum(c.state == s for c in cells) for s in (OK, DRIFT, MISSING, NA, UNKNOWN)}
-        print("\n" + "  ".join(f"{s}={n}" for s, n in counts.items()) + f"  exit={code}")
+        counts = {
+            s: sum(c.state == s for c in cells)
+            for s in (OK, DRIFT, MISSING, NA, UNKNOWN)
+        }
+        print(
+            "\n" + "  ".join(f"{s}={n}" for s, n in counts.items()) + f"  exit={code}"
+        )
     return code
 
 

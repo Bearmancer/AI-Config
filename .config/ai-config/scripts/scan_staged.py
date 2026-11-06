@@ -15,11 +15,15 @@ from lib.redaction import scan_text  # noqa: E402
 
 
 def git(*args: str) -> bytes:
-    return subprocess.run(["git", *args], capture_output=True, check=True, stdin=subprocess.DEVNULL).stdout
+    return subprocess.run(
+        ["git", *args], capture_output=True, check=True, stdin=subprocess.DEVNULL
+    ).stdout
 
 
 def main() -> int:
-    names = git("diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z").split(b"\0")
+    names = git("diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z").split(
+        b"\0"
+    )
     findings = []
     for raw in filter(None, names):
         name = raw.decode("utf-8")

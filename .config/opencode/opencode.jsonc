@@ -1,158 +1,167 @@
 {
-	"$schema": "https://opencode.ai/config.json",
-	"instructions": [
-		"~/.agents/AGENTS.md"
-	],
-	"update": "disable",
-	"share": "manual",
-	"model": "alibaba-token-plan/qwen3.8-flash",
-	"plugins": [
-		"oh-my-opencode-slim",
-		"@cortexkit/opencode-magic-context@0.49.35",
-		"@slkiser/opencode-quota@6.2.1"
-	],	"compaction": {
-		"auto": false
-	},
-	"experimental": {
-		"todo": true,
-		"artifacts": true,
-		"background_compaction": true,
-	},
-	"lsp": true,
-	"snapshots": false,
-	"warming": true,
-	"websearch": {
-		"provider": "random"
-	},
-	"agents": {
-		"build": {
-			"model": "alibaba-token-plan/qwen3.8-flash"
-		},
-		"plan": {
-			"model": "alibaba-token-plan/qwen3.8-flash"
-		},
-		"explore": {
-			"disabled": true
-		},
-		"general": {
-			"disabled": true
-		},
-	},
-	"permissions": [
-		{
-			"action": "*",
-			"resource": "*",
-			"effect": "allow"
-		}
-	],
-	// Vertex denied wholesale (owner, 2026-11-05): one provider.use policy replaces the old per-model google-vertex disable block.
-	"policies": [
-		{
-			"action": "provider.use",
-			"resource": "google-vertex",
-			"effect": "deny"
-		}
-	],
-	"tool_output": {
-		"max_lines": 2000,
-		"max_bytes": 51200
-	},
-	"mcp": {
-		"servers": {
-			"agentql": {
-				"disabled": true,
-				"type": "local",
-				"command": [
-					"agentql-mcp"
-				],
-				"environment": {
-					"AGENTQL_API_KEY": "{env:AGENTQL_API_KEY}"
-				}
-			},
-			"arxiv": {
-				"disabled": true,
-				"type": "local",
-				"command": [
-					"arxiv-mcp-server"
-				]
-			},
-			"codegraph": {
-				"type": "local",
-				"command": [
-					"codegraph",
-					"serve",
-					"--mcp"
-				]
-			},
-			"dappier": {
-				"disabled": true,
-				"type": "local",
-				"command": [
-					"dappier-mcp"
-				],
-				"environment": {
-					"DAPPIER_API_KEY": "{env:DAPPIER_API_KEY}"
-				}
-			},
-			"exa": {
-				"disabled": true,
-				"type": "local",
-				"command": [
-					"exa-mcp-server"
-				],
-				"environment": {
-					"EXA_API_KEY": "{env:EXA_API_KEY}"
-				}
-			},
-			"firecrawl": {
-				"disabled": true,
-				"type": "local",
-				"command": [
-					"firecrawl-mcp"
-				],
-				"environment": {
-					"FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
-				}
-			},
-			"paper-search": {
-				"disabled": true,
-				"type": "local",
-				"command": [
-					"paper-search-mcp"
-				]
-			},
-			"scrapegraph": {
-				"disabled": true,
-				"type": "local",
-				"command": [
-					"scrapegraph-mcp"
-				],
-				"environment": {
-					"SGAI_API_KEY": "{env:SGAI_API_KEY}"
-				}
-			},
-			"tavily": {
-				"disabled": true,
-				"type": "local",
-				"command": [
-					"tavily-mcp"
-				],
-				"environment": {
-					"TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
-				}
-			},
-			"zotero": {
-				"disabled": true,
-				"type": "local",
-				"command": [
-					"zotero-mcp"
-				],
-				"environment": {
-					"ZOTERO_API_KEY": "{env:ZOTERO_API_KEY}",
-					"ZOTERO_LIBRARY_ID": "22374787"
-				}
-			}
-		}
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "~/.agents/AGENTS.md"
+  ],
+  "update": "disable",
+  "share": "manual",
+  "model": "alibaba-token-plan/qwen3.8-flash",
+  "default_agent": "orchestrator",
+  // PowerShell 7 is installed only as the MSIX/Store package. Its App Execution Alias
+  // stat()s EACCES, so opencode's `which` lookup skips it and falls back to Windows
+  // PowerShell 5.1, which turns merged native stderr (2>&1) into an error and exits 1
+  // on commands that actually succeeded. Point the shell at the package's real exe:
+  // the single source of truth, no copy. Re-point this path when the Store package
+  // updates (the versioned folder name changes).
+  "shell": "C:\\Program Files\\WindowsApps\\Microsoft.PowerShell_7.6.9.0_x64__8wekyb3d8bbwe\\pwsh.exe",
+  "plugins": [
+    "oh-my-opencode-slim",
+    "@cortexkit/opencode-magic-context@0.49.35",
+    "@slkiser/opencode-quota@6.2.1"
+  ],
+  "compaction": {
+    "auto": false
+  },
+  "experimental": {
+    "todo": true,
+    "artifacts": true,
+    "background_compaction": true,
+  },
+  "lsp": true,
+  "snapshots": false,
+  "warming": true,
+  "websearch": {
+    "provider": "random"
+  },
+  "agents": {
+    "build": {
+      "model": "alibaba-token-plan/qwen3.8-flash"
+    },
+    "plan": {
+      "model": "alibaba-token-plan/qwen3.8-flash"
+    },
+    "explore": {
+      "disabled": true
+    },
+    "general": {
+      "disabled": true
+    },
+  },
+  "permissions": [
+    {
+      "action": "*",
+      "resource": "*",
+      "effect": "allow"
+    }
+  ],
+  // Vertex denied wholesale (owner, 2026-11-05): one provider.use policy replaces the old per-model google-vertex disable block.
+  "policies": [
+    {
+      "action": "provider.use",
+      "resource": "google-vertex",
+      "effect": "deny"
+    }
+  ],
+  "tool_output": {
+    "max_lines": 2000,
+    "max_bytes": 51200
+  },
+  "mcp": {
+    "servers": {
+      "agentql": {
+        "disabled": true,
+        "type": "local",
+        "command": [
+          "agentql-mcp"
+        ],
+        "environment": {
+          "AGENTQL_API_KEY": "{env:AGENTQL_API_KEY}"
+        }
+      },
+      "arxiv": {
+        "disabled": true,
+        "type": "local",
+        "command": [
+          "arxiv-mcp-server"
+        ]
+      },
+      "codegraph": {
+        "type": "local",
+        "command": [
+          "codegraph",
+          "serve",
+          "--mcp"
+        ]
+      },
+      "dappier": {
+        "disabled": true,
+        "type": "local",
+        "command": [
+          "dappier-mcp"
+        ],
+        "environment": {
+          "DAPPIER_API_KEY": "{env:DAPPIER_API_KEY}"
+        }
+      },
+      "exa": {
+        "disabled": true,
+        "type": "local",
+        "command": [
+          "exa-mcp-server"
+        ],
+        "environment": {
+          "EXA_API_KEY": "{env:EXA_API_KEY}"
+        }
+      },
+      "firecrawl": {
+        "disabled": true,
+        "type": "local",
+        "command": [
+          "firecrawl-mcp"
+        ],
+        "environment": {
+          "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}"
+        }
+      },
+      "paper-search": {
+        "disabled": true,
+        "type": "local",
+        "command": [
+          "paper-search-mcp"
+        ]
+      },
+      "scrapegraph": {
+        "disabled": true,
+        "type": "local",
+        "command": [
+          "scrapegraph-mcp"
+        ],
+        "environment": {
+          "SGAI_API_KEY": "{env:SGAI_API_KEY}"
+        }
+      },
+      "tavily": {
+        "disabled": true,
+        "type": "local",
+        "command": [
+          "tavily-mcp"
+        ],
+        "environment": {
+          "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
+        }
+      },
+      "zotero": {
+        "disabled": true,
+        "type": "local",
+        "command": [
+          "zotero-mcp"
+        ],
+        "environment": {
+          "ZOTERO_API_KEY": "{env:ZOTERO_API_KEY}",
+          "ZOTERO_LIBRARY_ID": "22374787"
+        }
+      }
+    }
   },
   "providers": {
     // Detected opencode-go authentication; opencode-quota added this global provider declaration.
@@ -195,5 +204,5 @@
         "opus": { "disabled": true }
       }
     }
-    }
+  }
 }

@@ -168,13 +168,13 @@ def test_references_and_non_secret_values_pass(line):
 
 def test_malformed_placeholder_variants_are_reported():
     assert find_placeholders("f", "k = {{bws:") == ["f:1 (malformed placeholder)"]
-    assert find_placeholders("f", "k = {{bws:a b}}") == [
-        "f:1 (malformed placeholder)"
-    ]
+    assert find_placeholders("f", "k = {{bws:a b}}") == ["f:1 (malformed placeholder)"]
     assert find_placeholders("f", "no marker here {{other}}") == []
 
 
 def test_scrub_masks_tokens_and_urls_but_keeps_plain_text():
-    cleaned = scrub(fx("see https://example.com/x?y=1 and gh~p_abcdefghijklmnopqrstuvwx ok"))
+    cleaned = scrub(
+        fx("see https://example.com/x?y=1 and gh~p_abcdefghijklmnopqrstuvwx ok")
+    )
     assert cleaned == "see [redacted] and [redacted] ok"
     assert scrub("nothing sensitive") == "nothing sensitive"

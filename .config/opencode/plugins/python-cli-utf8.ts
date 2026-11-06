@@ -21,61 +21,65 @@
  */
 
 interface PythonUtf8Options {
-	/** Shells are Windows PowerShell: prepend a pwsh env assignment. */
-	prefix: string;
-	/** Bare names of Python-based CLI shims that print non-ASCII to stdout. */
-	shims: string[];
-	/**
-	 * When true, refuse (throw) commands that would crash instead of
-	 * rewriting them, with the exact prefix to retry with. Used if input
-	 * mutation turns out not to propagate.
-	 */
-	strict: boolean;
+  /** Shells are Windows PowerShell: prepend a pwsh env assignment. */
+  prefix: string;
+  /** Bare names of Python-based CLI shims that print non-ASCII to stdout. */
+  shims: string[];
+  /**
+   * When true, refuse (throw) commands that would crash instead of
+   * rewriting them, with the exact prefix to retry with. Used if input
+   * mutation turns out not to propagate.
+   */
+  strict: boolean;
 }
 
 const OPTIONS: PythonUtf8Options = {
-	prefix: "$env:PYTHONIOENCODING='utf-8'; ",
-	shims: ["tvly"],
-	strict: false,
+  prefix: "$env:PYTHONIOENCODING='utf-8'; ",
+  shims: ["tvly"],
+  strict: false,
 };
 
 function invokesPythonShim(cmd: string, shims: string[]): boolean {
-	for (const shim of shims) {
-		// Statement start (line start, after ; | & separators, or after & call
-		// operator), optional quoted/qualified path, then the shim name.
-		const re = new RegExp(
-			`(?:^|[;&|\\n])\\s*(?:&\\s*)?(?:"[^"\\n]*[\\\\/]${shim}(?:\\.exe)?"|'[^'\\n]*[\\\\/]${shim}(?:\\.exe)?'|(?:[^\\s"';&|]+[\\\\/])?${shim}(?:\\.exe)?)(?=\\s|$)`,
-			"i",
-		);
-		if (re.test(cmd)) return true;
-	}
-	return false;
+  for (const shim of shims) {
+    // Statement start (line start, after ; | & separators, or after & call
+    // operator), optional quoted/qualified path, then the shim name.
+    const re = new RegExp(
+      `(?:^|[;&|\\n])\\s*(?:&\\s*)?(?:"[^"\\n]*[\\\\/]${shim}(?:\\.exe)?"|'[^'\\n]*[\\\\/]${shim}(?:\\.exe)?'|(?:[^\\s"';&|]+[\\\\/])?${shim}(?:\\.exe)?)(?=\\s|$)`,
+      "i",
+    );
+    if (re.test(cmd)) return true;
+  }
+  return false;
 }
 
 interface ToolExecuteBeforeEvent {
-	tool: string;
-	input: unknown;
+  tool: string;
+  input: unknown;
 }
 
-async function setup(ctx: { tool?: { hook: (name: string, cb: (event: ToolExecuteBeforeEvent) => void | Promise<void>) => Promise<unknown> } }): Promise<void> {
-	if (!ctx?.tool || typeof ctx.tool.hook !== "function") return;
-	await ctx.tool.hook("execute.before", (event) => {
-		if (!event || event.tool !== "shell") return;
-		if (!event.input || typeof event.input !== "object") return;
-		const record = event.input as Record<string, unknown>;
-		const cmd = typeof record.command === "string" ? record.command : typeof record.cmd === "string" ? record.cmd : "";
-		if (!cmd) return;
-		if (/PYTHONIOENCODING/i.test(cmd)) return; // already handled by the caller
-		if (!invokesPythonShim(cmd, OPTIONS.shims)) return;
+async function setup(
+  ctx: {
+    tool?: { hook: (name: string, cb: (event: ToolExecuteBeforeEvent) => void | Promise<void>) => Promise<unknown> };
+  },
+): Promise<void> {
+  if (!ctx?.tool || typeof ctx.tool.hook !== "function") return;
+  await ctx.tool.hook("execute.before", (event) => {
+    if (!event || event.tool !== "shell") return;
+    if (!event.input || typeof event.input !== "object") return;
+    const record = event.input as Record<string, unknown>;
+    const cmd = typeof record.command === "string" ? record.command : typeof record.cmd === "string" ? record.cmd : "";
+    if (!cmd) return;
+    if (/PYTHONIOENCODING/i.test(cmd)) return; // already handled by the caller
+    if (!invokesPythonShim(cmd, OPTIONS.shims)) return;
 
-		if (OPTIONS.strict) {
-			throw new Error(
-				`[Policy: python-cli-utf8] This command runs a Python CLI shim whose stdout defaults to cp1252; non-ASCII results crash it (UnicodeEncodeError). Retry with the prefix: ${OPTIONS.prefix}${cmd}`,
-			);
-		}
-		if (typeof record.command === "string") record.command = OPTIONS.prefix + cmd;
-		else if (typeof record.cmd === "string") record.cmd = OPTIONS.prefix + cmd;
-	});
+    if (OPTIONS.strict) {
+      throw new Error(
+        `[Policy: python-cli-utf8] This command runs a Python CLI shim whose stdout defaults to cp1252; non-ASCII results crash it (UnicodeEncodeError). Retry with the prefix: ${OPTIONS.prefix}${cmd}`,
+      );
+    }
+    if (typeof record.command === "string") record.command = OPTIONS.prefix + cmd;
+    else if (typeof record.cmd === "string") record.cmd = OPTIONS.prefix + cmd;
+  });
 }
 
 export default { id: "python-cli-utf8", setup };
