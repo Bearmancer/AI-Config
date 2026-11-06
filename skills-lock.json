@@ -523,12 +523,6 @@
       "skillPath": "skills/engineering/wayfinder/SKILL.md",
       "computedHash": "22338d9356ef84430c5ca916f2632f226583d9d7366433f62bfde5b1b6781e9e"
     },
-    "wizard": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "skillPath": "skills/engineering/wizard/SKILL.md",
-      "computedHash": "49298bed80e7f722b071ad5d64798c75eb705bbbe0635b9bbffd08cd6fb81647"
-    },
     "work-audit": {
       "source": "Bearmancer/skills",
       "sourceType": "github",
