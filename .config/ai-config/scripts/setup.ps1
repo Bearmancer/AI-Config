@@ -71,10 +71,12 @@ function Resolve-Secret {
     if ($exact) { return $exact }
     $prefix = $Var -replace '_API_KEY$', ''
     if ($PrefixAlias.ContainsKey($prefix)) { $prefix = $PrefixAlias[$prefix] }
-    $Secrets |
+    $named = @($Secrets |
         Where-Object { $_.key -ceq $prefix -or $_.key.StartsWith("${prefix}_", [StringComparison]::Ordinal) } |
-        Sort-Object { $_.key } |
-        Select-Object -First 1
+        Sort-Object { $_.key })
+    if ($named.Count -gt 1) { throw "ambiguous bws secrets for ${Var}: $($named.key -join ', ')" }
+    if ($named.Count -eq 1) { return $named[0] }
+    return $null
 }
 
 function ConvertTo-McpEntry {

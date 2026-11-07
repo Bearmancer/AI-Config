@@ -69,37 +69,12 @@ from pathlib import Path
 CONFIG_DIR = Path.home() / ".config/ai-config"
 sys.path.insert(0, str(CONFIG_DIR))
 from lib.yaml_config import load_registry
+from lib.jsonc import parse as parse_jsonc
+from lib.envfile import format_line
 
 ENV_REF = re.compile(r"\{env:([A-Za-z_][A-Za-z0-9_]*)\}")
 # bws prefix for an MCP env var is the var minus _API_KEY, unless listed here (prefix -> bws prefix).
 PREFIX_ALIAS = {"SGAI": "SCRAPEGRAPHAI"}
-
-
-def load_jsonc(text):
-    out, i, in_str = [], 0, False
-    while i < len(text):
-        c = text[i]
-        if in_str:
-            out.append(c)
-            if c == "\\":
-                out.append(text[i + 1])
-                i += 1
-            elif c == '"':
-                in_str = False
-        elif c == '"':
-            in_str = True
-            out.append(c)
-        elif text.startswith("//", i):
-            while i < len(text) and text[i] != "\n":
-                i += 1
-            continue
-        elif text.startswith("/*", i):
-            i = text.index("*/", i) + 2
-            continue
-        else:
-            out.append(c)
-        i += 1
-    return json.loads(re.sub(r",(\s*[}\]])", r"\1", "".join(out)))
 
 
 def resolve(var, secrets):
@@ -112,10 +87,14 @@ def resolve(var, secrets):
         (s for s in secrets if s["key"] == prefix or s["key"].startswith(prefix + "_")),
         key=lambda s: s["key"],
     )
+    if len(named) > 1:
+        raise SystemExit(
+            f"ambiguous bws secrets for {var}: {', '.join(s['key'] for s in named)}"
+        )
     return named[0] if named else None
 
 
-servers = load_jsonc(Path(os.environ["AI_CONFIG_OPENCODE_CONFIG"]).read_text("utf-8"))["mcp"]["servers"]
+servers = parse_jsonc(Path(os.environ["AI_CONFIG_OPENCODE_CONFIG"]).read_text("utf-8"), strict=False)["mcp"]["servers"]
 enabled = set(load_registry(CONFIG_DIR / "harnesses.yaml")["shared"]["enabled_servers"])
 variables = sorted(
     {m for s in servers.values() for v in s.get("environment", {}).values() for m in ENV_REF.findall(v)}
@@ -135,10 +114,7 @@ for var in variables:
     value = secret["value"]
     if any(c in value for c in "\r\n\0"):
         sys.exit(f"secret for {var} contains a newline or NUL character and cannot be written to environment.d")
-    if not re.fullmatch(r"[A-Za-z0-9_@%+=:,./-]*", value):
-        # Single quotes keep $, spaces and # literal for both systemd and a shell sourcing the file.
-        value = "'" + value.replace("'", "'\\''") + "'"
-    lines.append(f"{var}={value}")
+    lines.append(format_line(var, value))
     print(f"env: set {var}")
 if lines:
     target = Path.home() / ".config/environment.d/ai-config.conf"
