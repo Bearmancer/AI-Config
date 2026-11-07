@@ -20,11 +20,16 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
-      - name: Test suite
-        run: uv run --project .config/ai-config pytest -q .config/ai-config/tests
+      - name: Sync project environment
+        run: uv sync --project .config/ai-config
 
-      - name: Doctor (repo-only drift check)
-        run: uv run --project .config/ai-config python .config/ai-config/scripts/doctor.py --repo-only --home "$GITHUB_WORKSPACE"
-
-      - name: Lint
-        run: uv run --project .config/ai-config ty check .config/ai-config/lib .config/ai-config/scripts
+      - name: Test suite, doctor drift check and lint (concurrent)
+        run: |
+          uv run --project .config/ai-config pytest -q .config/ai-config/tests & tests=$!
+          uv run --project .config/ai-config python .config/ai-config/scripts/doctor.py --repo-only --home "$GITHUB_WORKSPACE" & doctor=$!
+          uv run --project .config/ai-config ty check .config/ai-config/lib .config/ai-config/scripts & lint=$!
+          status=0
+          wait $tests || status=1
+          wait $doctor || status=1
+          wait $lint || status=1
+          exit $status
