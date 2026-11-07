@@ -379,6 +379,12 @@
       "skillPath": "skills/just-scrape/SKILL.md",
       "computedHash": "a9a4d7e5d1f44c351f0a7eecd486c8b9107aa866348fd0e6fb92453c0f387245"
     },
+    "kotlin-modern-syntax": {
+      "source": "Bearmancer/skills",
+      "sourceType": "github",
+      "skillPath": "kotlin-modern-syntax/SKILL.md",
+      "computedHash": "91cdd639b52823f0fedb7e539f7ed892b9cc4733099158c6eedeba4ab5286fd7"
+    },
     "lead-generation": {
       "source": "exa-labs/agent-skills",
       "sourceType": "github",
