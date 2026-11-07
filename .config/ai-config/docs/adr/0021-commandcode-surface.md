@@ -6,7 +6,7 @@ Decision:
 
 - `harnesses.yaml` gains the `commandcode` mapping. The skills cell is the shared `~/.agents/skills`; `~/.commandcode/skills` is never created.
 - `~/.commandcode/AGENTS.md` is tracked and holds two imports: `@~/.agents/AGENTS.md` and `@~/.commandcode/omo-memory.md`.
-- `~/.commandcode/mcp.json` is tracked and defines the same ten servers as every harness, with only codegraph enabled and env references in `${VAR}` form.
+- `~/.commandcode/mcp.json` is tracked and defines the same ten servers as the flag-capable harnesses, with only codegraph enabled and env references in `${VAR}` form. Claude holds codegraph alone.
 - `~/.commandcode/settings.json` is tracked. `disabledSkills` is the union of OMO's disabled list and the names the owner already had off, so the mirror never re-enables a skill.
 - Setup writes `~/.commandcode/omo-memory.md`, an import-only list of OMO's standing memory (`system/*.md` plus `people/human/observations.md`). The OMO identity is resolved from `~/.omo/omo.jsonc` `memory.agent`, never hard-coded. Doctor re-derives the body and reports DRIFT on stale content.
 - Taste stays app-managed. No taste file is tracked or edited; OMO standing preferences reach Command Code as imported memory.

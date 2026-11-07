@@ -26,6 +26,7 @@ Read this table first. Open only the records whose Areas column matches the area
 | [0020](0020-harness-table-owns-files-and-plugins.md)    | A harness table owns its files, and JSON configs are JSONC                         | `harnesses.yaml`, `json_only`, twins                          |
 | [0021](0021-commandcode-surface.md)                     | Command Code is a first-class harness; its OMO bridge is generated, never copied   | `~/.commandcode`, OMO memory bridge, taste                    |
 | [0022](0022-yaml-registry.md)                           | The harness registry is YAML                                                       | registry format, PyYAML, cutover                              |
+| [0023](0023-pyyaml-via-uv-project.md)                   | pyyaml, pytest, and ty run from one AI-Config uv project                           | project env, `uv run --project`, lint                         |
 
 ## Citations that are not in this table
 

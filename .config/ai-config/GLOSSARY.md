@@ -9,7 +9,7 @@ AI-Config keeps omo, OpenCode, Kilo, Cline and Claude Code configured from one g
 ## Harnesses
 
 **Harness**:
-One of the five tools ai-config keeps in line: omo, opencode (OpenCode with Slim), kilo (the Kilo CLI, an OpenCode fork), cline (the Cline CLI) and claude (Claude Code).
+One of the six tools ai-config keeps in line: omo, opencode (OpenCode with Slim), kilo (the Kilo CLI, an OpenCode fork), cline (the Cline CLI), claude (Claude Code) and commandcode (Command Code).
 _Avoid_: Consumer, plugin, tool
 
 **Harness table**:
@@ -73,15 +73,19 @@ A kind of thing a harness has: instructions, mcp, skills, config or secrets. Doc
 _Avoid_: Unit, target
 
 **Cell**:
-One harness by one surface. Five harnesses and five surfaces make 25 cells.
+One harness by one surface. Six harnesses and five surfaces make 30 cells.
 _Avoid_: Row, check
 
 **State**:
 A cell's result: OK, DRIFT (present but wrong), MISSING (absent, never OK), NA (the harness cannot take the surface, with a reason read from its source) or UNKNOWN (the check itself failed). Doctor exits 0 only when every cell is OK or NA.
 _Avoid_: Status, health
 
+**Project env**:
+`.config/ai-config/pyproject.toml` plus `uv.lock`. It declares pyyaml, pytest and ty; every yaml reader runs `uv run --project ~/.config/ai-config`, never `--with`.
+_Avoid_: Venv, requirements file
+
 **Pre-commit hook**:
-`hooks/pre-commit`. It runs the redaction scan, doctor and the test suite, and any failure refuses the commit. It is the hard stop for drift.
+`hooks/pre-commit`. It runs the redaction scan, doctor and the test suite, and any failure refuses the commit. It is the hard stop for drift. The type pass (`ty`) runs in CI and by hand, not in the hook.
 _Avoid_: Git hook (when meaning an agent guard), CI
 
 **Redaction scan**:

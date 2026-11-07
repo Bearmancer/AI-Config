@@ -3,7 +3,8 @@
 # One mapping per harness, four cells each:
 #   instructions  the global instruction file the harness loads
 #   mcp           the file that carries the MCP server set (the same ten servers
-#                 in every harness: OpenCode's set in opencode.jsonc)
+#                 wherever the harness supports per-server flags: OpenCode's set in
+#                 opencode.jsonc; Claude holds codegraph alone)
 #   skills        the folder the harness reads skills from
 #   files         every other config file the harness owns
 #

@@ -9,6 +9,6 @@ Alternatives rejected: ruamel.yaml (round-trip comments, heavier dependency and 
 ## Consequences
 
 - Adding a harness is still one mapping in one file.
-- A missing `--with pyyaml` fails at import; the hook and CI commands are the enforcement point.
+- The registry loads inside the AI-Config uv project (ADR 0023); a missing project env fails at `uv run --project`, and the hook and CI are the enforcement point.
 - The TOML file remains in git history; the YAML is the current source of truth.
 - Redaction keeps its YAML key:value support and its TOML pair support for other staged TOML.
