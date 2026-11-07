@@ -1,6 +1,6 @@
 # AI-Config
 
-One git repo keeps the config of five coding tools identical on every PC: omo, OpenCode, Kilo, Cline and Claude Code. The repo's git dir is `~/Dev/AI-Config/.git` and its work tree is the home folder, so the tracked files are the live files. There is nothing to install, link or sync. You edit a file where the tool reads it, commit, and the other PCs get it with `git pull`.
+One git repo keeps the config of six coding tools identical on every PC: omo, OpenCode, Kilo, Cline, Claude Code and Command Code. The repo's git dir is `~/Dev/AI-Config/.git` and its work tree is the home folder, so the tracked files are the live files. There is nothing to install, link or sync. You edit a file where the tool reads it, commit, and the other PCs get it with `git pull`.
 
 Words: `GLOSSARY.md`.
 
@@ -21,7 +21,7 @@ Only files named in `~/.gitignore` are visible to git. Its first rule is `/*`, s
 
 ## Doctor
 
-`ai-config doctor` is `scripts/doctor.py`. It reads `harnesses.toml` and the live files and prints 25 cells: five harnesses (omo, opencode, kilo, cline, claude) by five surfaces (instructions, mcp, skills, config, secrets). Each cell is OK, DRIFT, MISSING, NA or UNKNOWN. It exits 0 only when every cell is OK or NA, and an absent file is never OK. A cell is NA only with a reason read from the harness's own source. Doctor never writes and never prints a secret value.
+`ai-config doctor` is `scripts/doctor.py`. It reads `harnesses.toml` and the live files and prints one row per harness per surface: six harnesses (omo, opencode, kilo, cline, claude, commandcode) by five surfaces (instructions, mcp, skills, config, secrets). Each cell is OK, DRIFT, MISSING, NA or UNKNOWN. It exits 0 only when every cell is OK or NA, and an absent file is never OK. A cell is NA only with a reason read from the harness's own source. Doctor never writes and never prints a secret value.
 
 ```
 uv run --no-project python ~/.config/ai-config/scripts/doctor.py
@@ -45,9 +45,9 @@ uv run --no-project --with pytest pytest -q ~/.config/ai-config/tests
 
 | surface      | live file                                                                                                                                                                | who writes it                                              |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| instructions | `~/.agents/AGENTS.md`, the only instruction content                                                                                                                      | git                                                        |
-| MCP servers  | `~/.omo/agent/mcp.json`, `~/.config/opencode/opencode.jsonc`, `~/.config/kilo/kilo.jsonc`; untracked: `~/.cline/data/settings/cline_mcp_settings.json`, `~/.claude.json` | git for the first three, the setup script for the last two |
-| skills       | `~/.agents/skills` and `~/.claude/skills`, both matching `~/skills-lock.json`                                                                                            | `npx skills`                                               |
+| instructions | `~/.agents/AGENTS.md`, the only instruction content; `~/.claude/CLAUDE.md` and `~/.commandcode/AGENTS.md` hold import lines only                                   | git                                                        |
+| MCP servers  | `~/.omo/agent/mcp.json`, `~/.config/opencode/opencode.jsonc`, `~/.config/kilo/kilo.jsonc`, `~/.commandcode/mcp.json`; untracked: `~/.cline/data/settings/cline_mcp_settings.json`, `~/.claude.json` | git for the tracked files, the setup script for the last two |
+| skills       | `~/.agents/skills` and `~/.claude/skills`, both matching `~/skills-lock.json`; Command Code reads `~/.agents/skills`                                                        | `npx skills`                                               |
 | config       | the files each harness table in `harnesses.toml` names                                                                                                                   | git, and the app when it rewrites its own file in place    |
 | secrets      | per-PC user environment variables                                                                                                                                        | the setup script, from bws                                 |
 
@@ -55,17 +55,19 @@ Never tracked: `~/.claude.json`, `~/.cline/data/**`, the Magic Context database,
 
 ### Instructions
 
-`~/.agents/AGENTS.md` is the only instruction content. OpenCode and Kilo list it in the `instructions` key of their config, Cline reads it natively, and Claude Code loads it through the single import line in `~/.claude/CLAUDE.md`. omo is NA: it reads a global instruction file only from `~/.omo/agent/` and has no setting for another path. The upstream request is senpi issue #5567.
+`~/.agents/AGENTS.md` is the only instruction content. OpenCode and Kilo list it in the `instructions` key of their config, Cline reads it natively, Claude Code loads it through the single import line in `~/.claude/CLAUDE.md`, and Command Code loads `~/.commandcode/AGENTS.md`, which holds only `@~/.agents/AGENTS.md` and `@~/.commandcode/omo-memory.md`. omo is NA: it reads a global instruction file only from `~/.omo/agent/` and has no setting for another path. The upstream request is senpi issue #5567.
+
+`~/.commandcode/omo-memory.md` is generated by the setup script through `scripts/commandcode_memory.py`. It imports OMO's standing memory (`system/*.md` plus `people/human/observations.md`) from the local OMO identity named by `~/.omo/omo.jsonc` `memory.agent`. Doctor re-derives it and reports DRIFT when it is stale. OMO still owns its memory repository; the home repo writes only that import list ([0021](docs/adr/0021-commandcode-surface.md)). Command Code's learned taste profile stays app-managed: no taste file is tracked or edited.
 
 ### MCP servers
 
-Ten servers are defined in every harness: agentql, arxiv, codegraph, dappier, exa, firecrawl, paper-search, scrapegraph, tavily and zotero. A stanza has one shape everywhere: a bare command, its args, and an env block that holds only references to environment variables, never a value. OpenCode and Kilo spell the same thing as a command array plus `environment` and `type: local`. Only codegraph is enabled. The other nine stay defined but disabled: `enabled: false` in omo and Kilo, `disabled: true` in OpenCode and Cline. Claude Code has no per-server disable flag at user scope, so its file holds codegraph alone. The one literal allowed in a stanza is `ZOTERO_LIBRARY_ID`, a non-secret number.
+Ten servers are defined in every harness: agentql, arxiv, codegraph, dappier, exa, firecrawl, paper-search, scrapegraph, tavily and zotero. A stanza has one shape everywhere: a bare command, its args, and an env block that holds only references to environment variables, never a value. OpenCode and Kilo spell the same thing as a command array plus `environment` and `type: local`. Only codegraph is enabled. The other nine stay defined but disabled: `enabled: false` in omo, Kilo and Command Code, `disabled: true` in OpenCode and Cline. Claude Code has no per-server disable flag at user scope, so its file holds codegraph alone. The one literal allowed in a stanza is `ZOTERO_LIBRARY_ID`, a non-secret number.
 
 ### Skills
 
 Skills come only from `npx skills`, which records every source in `~/skills-lock.json`. The owner's own skills live in the public repo Bearmancer/skills and reach a PC the same way.
 
-Two folders hold skills. `~/.agents/skills` is the one omo, OpenCode, Kilo and Cline read, and `npx skills experimental_install` run from the home folder fills it from the lock. Claude Code reads personal skills only from `~/.claude/skills`, which that command never fills, so Claude's folder is filled with `npx skills add <source> -s <names> -a claude-code -y` for each source in the lock. In non-interactive mode that installs copies, so every lock skill exists in both folders. Claude's `synced` folder is managed by claude.ai and is left alone. The setup script runs both steps, restore first and then one `add` per lock source.
+Two folders hold skills. `~/.agents/skills` is the one omo, OpenCode, Kilo, Cline and Command Code read, and `npx skills experimental_install` run from the home folder fills it from the lock. Claude Code reads personal skills only from `~/.claude/skills`, which that command never fills, so Claude's folder is filled with `npx skills add <source> -s <names> -a claude-code -y` for each source in the lock. In non-interactive mode that installs copies, so every lock skill exists in both folders. Claude's `synced` folder is managed by claude.ai and is left alone. The setup script runs both steps, restore first and then one `add` per lock source.
 
 Skills track upstream's current content, latest only. `npx skills add` always installs upstream's HEAD and the lock records the new hash. A skill that upstream removes is purged with `npx skills remove <name> -y`, which drops the lock entry and every skills folder. Doctor checks that every lock skill is present in both folders, and flags any skill folder that is not in the lock as DRIFT (stale skill not in lock), so a stale skill blocks the next commit.
 

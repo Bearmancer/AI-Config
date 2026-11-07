@@ -1,6 +1,6 @@
-# Doctor prints a 25-cell matrix and never writes
+# Doctor prints one row per harness per surface and never writes
 
-Context: Five harnesses times five surfaces is 25 cells, and any of them can fall out of line without a sign. An older check once reported green for a file that did not exist.
+Context: The registry decides how many harnesses exist and each harness carries up to five surfaces, so the cell count grows with `harnesses.toml`. Any cell can fall out of line without a sign, and an older check once reported green for a file that did not exist.
 
 Decision: `scripts/doctor.py` is read-only. It prints one row per cell with a state and a reason, then a count line, and exits 0 only when every cell is OK or NA.
 

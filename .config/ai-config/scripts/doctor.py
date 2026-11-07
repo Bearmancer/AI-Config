@@ -1,4 +1,4 @@
-"""ai-config doctor: the 25-cell parity check (5 harnesses x 5 surfaces).
+"""ai-config doctor: one parity cell per harness per surface.
 
 Reads harnesses.toml and the live files. Prints one row per cell and exits 0
 only when every cell is OK or NA. It never writes or fixes anything and never
@@ -29,9 +29,15 @@ if str(CONFIG_DIR) not in sys.path:
 
 from lib import jsonc  # noqa: E402
 from lib.redaction import scan_text  # noqa: E402
+from scripts import commandcode_memory  # noqa: E402
 
-HARNESSES = ("omo", "opencode", "kilo", "cline", "claude")
 SURFACES = ("instructions", "mcp", "skills", "config", "secrets")
+
+
+def harness_names(registry: dict) -> list[str]:
+    """Every harness table in harnesses.toml, in file order."""
+    return [name for name in registry if name != "shared"]
+
 OK, DRIFT, MISSING, NA, UNKNOWN = "OK", "DRIFT", "MISSING", "NA", "UNKNOWN"
 _PRIORITY = (MISSING, DRIFT, UNKNOWN)
 
@@ -73,6 +79,13 @@ SHAPES = {
         type="stdio",
         allowed={"type", "command", "args", "env"},
     ),
+    "commandcode": dict(
+        cmd="str",
+        env="env",
+        off=("enabled", False),
+        type=None,
+        allowed={"transport", "command", "args", "env", "enabled"},
+    ),
 }
 SERVERS_AT = {"omo": "mcpServers", "cline": "mcpServers", "claude": "mcpServers"}
 IMPORT_LINE_FILE = ".claude/CLAUDE.md"
@@ -83,6 +96,7 @@ SECOND_INSTRUCTIONS = {
     "kilo": (".config/kilo/AGENTS.md",),
     "cline": (".cline/AGENTS.md",),
     "claude": (".claude/AGENTS.md",),
+    "commandcode": (".commandcode/.commandcode/AGENTS.md",),
 }
 HOME_INSTRUCTIONS = "AGENTS.md"
 # Skills folders other than ~/.agents/skills where a copy would be a twin.
@@ -91,6 +105,7 @@ SKILL_TWIN_ROOTS = {
     "opencode": (".config/opencode/skills",),
     "kilo": (".config/kilo/skills",),
     "cline": (".cline/skills",),
+    "commandcode": (".commandcode/skills",),
 }
 FIXED_TRACKED = (".gitignore", "skills-lock.json", ".claude/CLAUDE.md")
 FIXED_TRACKED_PREFIXES = (".config/ai-config/", ".github/")
@@ -298,7 +313,7 @@ def _has_content(path: Path) -> bool:
 def check_instructions(ctx: Ctx, h: str) -> Cell:
     cell = Cell(h, "instructions")
     spec = ctx.reg[h]["instructions"]
-    seconds = [*SECOND_INSTRUCTIONS[h], HOME_INSTRUCTIONS]
+    seconds = [*SECOND_INSTRUCTIONS.get(h, ()), HOME_INSTRUCTIONS]
     for rel in seconds:
         if _has_content(ctx.home / rel):
             cell.add(DRIFT, f"second instruction file has content: ~/{rel}")
@@ -329,6 +344,17 @@ def check_instructions(ctx: Ctx, h: str) -> Cell:
                 DRIFT,
                 f"~/{IMPORT_LINE_FILE} is not the single import line @{spec['path']}",
             )
+    if h == "commandcode" and path.is_file():
+        expected = ["@~/.agents/AGENTS.md", "@~/.commandcode/omo-memory.md"]
+        lines = [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        if lines != expected:
+            cell.add(
+                DRIFT,
+                f"{spec['path']} must hold exactly {expected}, not a copy",
+            )
+        elif not ctx.repo_only:
+            for problem in commandcode_memory.check_problems(ctx.home):
+                cell.add(DRIFT, problem)
     return cell
 
 
@@ -437,7 +463,38 @@ def check_skills(ctx: Ctx, h: str) -> Cell:
             )
     if h == "omo":
         _omo_skill_filter(ctx, cell, present)
+    if h == "commandcode":
+        _commandcode_disabled(ctx, cell)
     return cell
+
+
+def _commandcode_disabled(ctx: Ctx, cell: Cell) -> None:
+    settings = next(
+        (s for s in ctx.reg["commandcode"]["files"] if s["path"].endswith("settings.json")),
+        None,
+    )
+    if settings is None:
+        cell.add(DRIFT, "harnesses.toml [commandcode] files lacks settings.json")
+        return
+    doc, problems = ctx.read_json(settings)
+    for state, reason in problems:
+        cell.add(state, reason)
+    if doc is None:
+        return
+    disabled = set(doc.get("disabledSkills") or ())
+    try:
+        omo_cfg = jsonc.parse(
+            (ctx.home / ".omo/omo.jsonc").read_text(encoding="utf-8"), strict=False
+        )
+    except (OSError, jsonc.JsonError, TypeError, AttributeError) as exc:
+        cell.add(DRIFT, f"commandcode disabled-set source unreadable: {exc}")
+        return
+    missing = sorted(set(omo_cfg.get("disabled_skills") or ()) - disabled)
+    if missing:
+        cell.add(
+            DRIFT,
+            f"OMO-disabled skills missing from commandcode disabledSkills: {', '.join(missing)}",
+        )
 
 
 def _omo_skill_filter(ctx: Ctx, cell: Cell, present: set) -> None:
@@ -557,7 +614,7 @@ def check_secrets(ctx: Ctx, h: str) -> Cell:
 
 def registry_tracked(ctx: Ctx) -> list[tuple[str, str]]:
     out = []
-    for h in HARNESSES:
+    for h in harness_names(ctx.reg):
         for surface in ("instructions", "mcp", "skills"):
             spec = ctx.reg[h][surface]
             if spec.get("tracked"):
@@ -631,7 +688,7 @@ def run(
         "secrets": check_secrets,
     }
     cells = []
-    for h in HARNESSES:
+    for h in harness_names(registry):
         for surface in SURFACES:
             try:
                 cell = checks[surface](ctx, h)
@@ -657,7 +714,7 @@ def exit_code(cells: list[Cell]) -> int:
 
 def main(argv: list[str] | None = None, env: Mapping | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="ai-config doctor: 25-cell parity check"
+        description="ai-config doctor: one parity cell per harness per surface"
     )
     parser.add_argument(
         "--json", action="store_true", help="print JSON instead of the table"

@@ -11,7 +11,9 @@
 #      universal agents (.agents/skills), so it then runs
 #      npx skills add <source> -s <name> -a claude-code -y for each lock skill
 #      (one name per call; multi-name -s fails on some sources) to fill ~/.claude/skills.
-#   5. Write the OpenCode MCP server set into the app-owned Cline and Claude files:
+#   5. Generate ~/.commandcode/omo-memory.md, the import-only bridge to OMO
+#      standing memory.
+#   6. Write the OpenCode MCP server set into the app-owned Cline and Claude files:
 #      Cline holds every server with all but the harnesses.toml [shared] enabled_servers
 #      set to disabled; Claude holds only the enabled servers.
 #
@@ -209,6 +211,9 @@ PY
 		npx --yes skills add "$source" -s "$name" -a claude-code -y </dev/null
 	done
 )
+
+# 5. Command Code memory bridge: imports OMO standing rules; never a copy.
+uv run --no-project python "$config_dir/scripts/commandcode_memory.py" --write
 
 [ "$rc" -eq 0 ] || exit "$rc"
 echo "setup complete. Log out and in (or restart apps) to pick up the new environment variables."

@@ -14,7 +14,8 @@ One-shot per-PC setup: puts the AI-Config repo in place at $HOME and wires the a
    command installs only to universal agents (.agents/skills), so it then runs
    `npx skills add <source> -s <name> -a claude-code -y` for each lock skill (one name
    per call; multi-name -s fails on some sources) to fill ~/.claude/skills.
-5. Writes the OpenCode MCP server set into the app-owned Cline and Claude files:
+5. Generates ~/.commandcode/omo-memory.md, the import-only bridge to OMO standing memory.
+6. Writes the OpenCode MCP server set into the app-owned Cline and Claude files:
    Cline holds every server with all but the harnesses.toml [shared] enabled_servers
    set to disabled; Claude holds only the enabled servers.
 
@@ -196,7 +197,10 @@ finally {
     Remove-Item Env:GIT_CONFIG_COUNT, Env:GIT_CONFIG_KEY_0, Env:GIT_CONFIG_VALUE_0, Env:GIT_CONFIG_KEY_1, Env:GIT_CONFIG_VALUE_1
 }
 
-# 5. MCP entries for the apps whose files are not tracked.
+# 5. Command Code memory bridge: imports OMO standing rules; never a copy.
+Invoke-Native 'commandcode memory bridge' { uv run --no-project python (Join-Path $ConfigDir 'scripts/commandcode_memory.py') --write }
+
+# 6. MCP entries for the apps whose files are not tracked.
 $enabled = @(uv run --no-project python -c "import tomllib,sys;print('\n'.join(tomllib.load(open(sys.argv[1],'rb'))['shared']['enabled_servers']))" $HarnessesToml)
 if ($LASTEXITCODE -ne 0 -or -not $enabled) { throw "cannot read [shared] enabled_servers from $HarnessesToml" }
 Set-McpServers $ClineMcp 'cline' '${env:VAR}' $false $true $servers $enabled

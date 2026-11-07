@@ -92,3 +92,12 @@ skills = { path = "~/.claude/skills", tracked = false, writer = "npx skills add 
 files = [
   { path = "~/.claude/settings.json", tracked = true },
 ]
+
+[commandcode]
+instructions = { path = "~/.commandcode/AGENTS.md", tracked = true, via = "Command Code reads ~/.commandcode/AGENTS.md natively; it imports ~/.agents/AGENTS.md" }
+mcp = { path = "~/.commandcode/mcp.json", tracked = true, env_ref = "${VAR}", servers_at = "mcpServers", json_only = "Command Code reads mcp.json only; no mcp.jsonc loader exists (probed 2026-11-07)" }
+skills = { path = "~/.agents/skills", tracked = false, writer = "npx skills experimental_install" }
+files = [
+  { path = "~/.commandcode/settings.json", tracked = true },
+  { path = "~/.commandcode/omo-memory.md", tracked = false, writer = "setup" },
+]

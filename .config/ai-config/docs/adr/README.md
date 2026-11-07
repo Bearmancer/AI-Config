@@ -10,7 +10,7 @@ Read this table first. Open only the records whose Areas column matches the area
 | [0004](0004-mcp-presets-and-tiers.md)                   | MCP servers: one stanza shape, codegraph enabled everywhere                        | MCP files, env references, disable flags                      |
 | [0005](0005-skills.md)                                  | Skills come only from npx skills; own skills live in a public repo                 | `~/skills-lock.json`, `~/.agents/skills`, Claude Code skills  |
 | [0006](0006-secrets-and-gates.md)                       | Secrets live in per-PC environment variables; the commit gate refuses a literal    | bws, user environment variables, redaction scan               |
-| [0007](0007-status-matrix.md)                           | Doctor prints a 25-cell matrix and never writes                                    | cells, states, exit code, `--repo-only`                       |
+| [0007](0007-status-matrix.md)                           | Doctor prints one row per harness per surface and never writes                     | cells, states, exit code, `--repo-only`                       |
 | [0008](0008-memory-mirror.md)                           | Memory mirror: omo owns the push, the home repo owns nothing of it                 | omo memory                                                    |
 | [0009](0009-model-routing.md)                           | Model routing uses each tool's native mechanism, on the Claude 5.5 family only     | omo routing, Slim presets, model hiding                       |
 | [0010](0010-routine-runs-never-commit.md)               | Nothing commits on its own                                                         | commits, schedules, Python via `uv run`                       |
@@ -20,10 +20,11 @@ Read this table first. Open only the records whose Areas column matches the area
 | [0014](0014-instructions-are-import-lines.md)           | One instruction file, `~/.agents/AGENTS.md`, and each harness loads it its own way | instruction loading, `~/.claude/CLAUDE.md`, the omo NA cell   |
 | [0015](0015-kilo-settings-merge-into-one-file.md)       | Kilo keeps all its settings in one tracked file                                    | `~/.config/kilo/kilo.jsonc`                                   |
 | [0016](0016-no-deprecated-config-keys.md)               | No harness config holds a deprecated key                                           | every harness config                                          |
-| [0017](0017-install-is-one-linear-line.md)              | One path: setup once per PC, then git pull and git push                            | `scripts/setup.ps1`, `scripts/setup.sh`, the five setup steps |
+| [0017](0017-install-is-one-linear-line.md)              | One path: setup once per PC, then git pull and git push                            | `scripts/setup.ps1`, `scripts/setup.sh`, the six setup steps |
 | [0018](0018-skills-and-mcp-presets-are-independent.md)  | Skills and MCP servers are independent surfaces                                    | skills cell, mcp cell                                         |
 | [0019](0019-no-backup-artifacts.md)                     | No backup artifacts anywhere                                                       | backup files, undo history                                    |
 | [0020](0020-harness-table-owns-files-and-plugins.md)    | A harness table owns its files, and JSON configs are JSONC                         | `harnesses.toml`, `json_only`, twins                          |
+| [0021](0021-commandcode-surface.md)                     | Command Code is a first-class harness; its OMO bridge is generated, never copied   | `~/.commandcode`, OMO memory bridge, taste                    |
 
 ## Citations that are not in this table
 

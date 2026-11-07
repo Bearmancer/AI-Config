@@ -1,0 +1,65 @@
+{
+  "mods": {
+    "enabled": [
+      "todos"
+    ]
+  },
+  "disabledSkills": [
+    "academic-paper",
+    "academic-paper-reviewer",
+    "academic-pipeline",
+    "agent-browser",
+    "annotate-paper",
+    "arxiv-research",
+    "build-with-exa",
+    "chief-of-staff",
+    "ci-cd-and-automation",
+    "claude-handoff",
+    "company-research",
+    "dappier",
+    "data-scientist",
+    "deep-research",
+    "diagnosing-superpowers",
+    "exa-contents",
+    "exa-search",
+    "firecrawl",
+    "firecrawl-agent",
+    "firecrawl-alexandria",
+    "firecrawl-crawl",
+    "firecrawl-developer-index",
+    "firecrawl-download",
+    "firecrawl-interact",
+    "firecrawl-map",
+    "firecrawl-monitor",
+    "firecrawl-parse",
+    "firecrawl-research-index",
+    "firecrawl-scrape",
+    "firecrawl-search",
+    "frontend-ui-engineering",
+    "grill-me",
+    "grilling",
+    "just-scrape",
+    "lead-generation",
+    "paper-search",
+    "prototype",
+    "research",
+    "scaffold-exercises",
+    "sr-screener",
+    "subtitle-triage",
+    "tavily-best-practices",
+    "tavily-research",
+    "tavily-search"
+  ],
+  "permissions": {
+    "allow": [
+      "Shell(Get-ChildItem:*)",
+      "Shell(Select-Object:*)",
+      "Shell(if:*)",
+      "Shell(Test-Path:*)",
+      "Shell({:*)",
+      "powershell"
+    ],
+    "deny": [],
+    "defaultMode": "dont-ask"
+  }
+}

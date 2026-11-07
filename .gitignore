@@ -17,6 +17,12 @@
 !/.claude/settings.json
 !/.claude/CLAUDE.md
 
+!/.commandcode/
+/.commandcode/*
+!/.commandcode/AGENTS.md
+!/.commandcode/mcp.json
+!/.commandcode/settings.json
+
 !/.cline/
 /.cline/*
 !/.cline/rules/

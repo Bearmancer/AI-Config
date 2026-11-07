@@ -96,7 +96,7 @@ def world(tmp_path):
     write(home, ".agents/skills/alpha/SKILL.md", "# alpha\n")
     write(home, ".claude/skills/alpha/SKILL.md", "# alpha\n")
     write(home, ".claude/skills/synced/other/SKILL.md", "# claude.ai\n")
-    for h in doctor.HARNESSES:
+    for h in doctor.harness_names(reg):
         build_mcp(home, reg, h)
         for spec in reg[h]["files"]:
             if (
@@ -104,6 +104,12 @@ def world(tmp_path):
                 and not (home / spec["path"].removeprefix("~/")).exists()
             ):
                 write(home, spec["path"], "{}")
+    write(home, ".omo/omo.jsonc", json.dumps({"memory": {"agent": "global-1"}, "disabled_skills": []}))
+    for rel in doctor.commandcode_memory.SOURCES:
+        write(home, f".omo/memory/agents/global-1-abcd/repo/{rel}", f"# {rel}\n")
+    write(home, ".commandcode/AGENTS.md", "@~/.agents/AGENTS.md\n@~/.commandcode/omo-memory.md\n")
+    write(home, ".commandcode/settings.json", json.dumps({"disabledSkills": []}))
+    doctor.commandcode_memory.write(home)
     return home, reg
 
 
@@ -112,10 +118,10 @@ def states(home, reg, env=ENV, repo_only=False):
     return {(c.harness, c.surface): c for c in cells}, cells
 
 
-def test_clean_home_is_25_cells_all_ok_or_na(world):
+def test_clean_home_is_all_ok_or_na(world):
     home, reg = world
     by, cells = states(home, reg)
-    assert len(cells) == 25
+    assert len(cells) == len(doctor.harness_names(reg)) * len(doctor.SURFACES)
     assert {c.state for c in cells} <= {doctor.OK, doctor.NA}
     assert by["omo", "instructions"].state == doctor.NA
     assert by["omo", "instructions"].reasons == [reg["omo"]["instructions"]["na"]]
@@ -237,7 +243,7 @@ def test_tracked_set_disagreement_is_drift_everywhere(world):
         f.write("\n!/stray.jsonc\n")
     write(home, "stray.jsonc", "{}")
     by, cells = states(home, reg)
-    assert all(by[h, "config"].state == doctor.DRIFT for h in doctor.HARNESSES)
+    assert all(by[h, "config"].state == doctor.DRIFT for h in doctor.harness_names(reg))
     assert doctor.exit_code(cells) == 1
 
 
@@ -250,12 +256,12 @@ def test_hook_or_setup_script_without_exec_bit_in_index_is_drift(world, rel):
         ["git", "-C", str(home), "update-index", "--chmod=-x", rel], check=True
     )
     by, cells = states(home, reg)
-    assert all(by[h, "config"].state == doctor.DRIFT for h in doctor.HARNESSES)
+    assert all(by[h, "config"].state == doctor.DRIFT for h in doctor.harness_names(reg))
     subprocess.run(
         ["git", "-C", str(home), "update-index", "--chmod=+x", rel], check=True
     )
     by, cells = states(home, reg)
-    assert all(by[h, "config"].state != doctor.DRIFT for h in doctor.HARNESSES)
+    assert all(by[h, "config"].state != doctor.DRIFT for h in doctor.harness_names(reg))
 
 
 def test_failed_check_is_unknown_not_ok(world, monkeypatch):
@@ -276,17 +282,71 @@ def test_repo_only_needs_no_live_files(world):
     assert by["cline", "mcp"].state == doctor.NA
     assert all(
         by[h, "skills"].state == doctor.NA
-        for h in doctor.HARNESSES
+        for h in doctor.harness_names(reg)
         if "na" not in reg[h]["skills"]
     )
     assert doctor.exit_code(cells) == 0
 
 
-def test_json_output_lists_25_cells(world, capsys):
-    home, _ = world
+def test_json_output_lists_every_cell(world, capsys):
+    home, reg = world
     assert doctor.main(["--json", "--home", str(home)], env=ENV) == 0
     report = json.loads(capsys.readouterr().out)
-    assert report["exit"] == 0 and len(report["cells"]) == 25
+    assert report["exit"] == 0
+    assert len(report["cells"]) == len(doctor.harness_names(reg)) * len(doctor.SURFACES)
+
+
+def test_harness_list_derives_from_registry(world):
+    _, reg = world
+    assert doctor.harness_names(reg) == [
+        "omo",
+        "opencode",
+        "kilo",
+        "cline",
+        "claude",
+        "commandcode",
+    ]
+
+
+def test_commandcode_instructions_must_be_import_lines(world):
+    home, reg = world
+    write(home, ".commandcode/AGENTS.md", "# copied rules\n")
+    by, _ = states(home, reg)
+    assert by["commandcode", "instructions"].state == doctor.DRIFT
+
+
+def test_commandcode_disabled_set_must_cover_omo(world):
+    home, reg = world
+    write(
+        home,
+        ".omo/omo.jsonc",
+        json.dumps({"memory": {"agent": "global-1"}, "disabled_skills": ["alpha"]}),
+    )
+    by, _ = states(home, reg)
+    assert by["commandcode", "skills"].state == doctor.DRIFT
+    assert any("alpha" in r for r in by["commandcode", "skills"].reasons)
+    write(home, ".commandcode/settings.json", json.dumps({"disabledSkills": ["alpha"]}))
+    by, _ = states(home, reg)
+    assert by["commandcode", "skills"].state == doctor.OK
+
+
+def test_commandcode_enables_only_codegraph(world):
+    home, reg = world
+    path = home / ".commandcode/mcp.json"
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    del doc["mcpServers"]["exa"]["enabled"]
+    path.write_text(json.dumps(doc, indent=1), encoding="utf-8")
+    by, _ = states(home, reg)
+    assert by["commandcode", "mcp"].state == doctor.DRIFT
+    assert any("exa" in r for r in by["commandcode", "mcp"].reasons)
+
+
+def test_commandcode_memory_bridge_stale_is_drift(world):
+    home, reg = world
+    path = home / ".commandcode/omo-memory.md"
+    path.write_text(path.read_text(encoding="utf-8") + "@extra\n", encoding="utf-8")
+    by, _ = states(home, reg)
+    assert by["commandcode", "instructions"].state == doctor.DRIFT
 
 
 def test_jsonc_dialects():
