@@ -488,10 +488,10 @@
       "computedHash": "b668246d0dc183403a020ec2f83b31d68f284bbc25901bda540b3793ae947336"
     },
     "rigorous-planning": {
-      "source": "./local",
-      "sourceType": "local",
+      "source": "Bearmancer/skills",
+      "sourceType": "github",
       "skillPath": "rigorous-planning/SKILL.md",
-      "computedHash": "a11087d331582ba3c39a2a0326925217a591f18476878c18d89e0c2431dee9a4"
+      "computedHash": "0500d1bdfd4751e2d96ed556f85f7bc75581cbb7d6ccbe238c7e4dae31ae209f"
     },
     "rigorous-research": {
       "source": "Bearmancer/skills",
