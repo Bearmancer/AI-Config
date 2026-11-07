@@ -8,6 +8,33 @@ import { readFileSync } from "node:fs";
  * 3. Requires explicit UTF-8 encoding when reading/writing files.
  */
 // `existing` is the file's on-disk content for edit-type tools: the new fragment alone cannot show a pathlib import that is already there.
+function stripPythonCommentsAndStrings(source: string): string {
+  let out = "";
+  let quote = "";
+  for (let i = 0; i < source.length; i++) {
+    const ch = source[i];
+    if (quote) {
+      if (ch === "\\") {
+        i++;
+        continue;
+      }
+      if (ch === quote) quote = "";
+      continue;
+    }
+    if (ch === "#") {
+      while (i < source.length && source[i] !== "\n") i++;
+      out += "\n";
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
 function inspectPythonPathlib(path: string, content: string, existing = ""): void {
   if (typeof path !== "string" || !path.endsWith(".py")) return;
   if (typeof content !== "string" || !content.trim()) return;
@@ -15,13 +42,14 @@ function inspectPythonPathlib(path: string, content: string, existing = ""): voi
   // Check if content does file / path operations
   const fileOpRegex =
     /(?:\b(?:open\s*\(|os\.path\b|os\.listdir\b|os\.walk\b|os\.mkdir\b|os\.makedirs\b|os\.remove\b|os\.unlink\b|shutil\b))/;
-  const hasFileOps = fileOpRegex.test(content);
+  const code = stripPythonCommentsAndStrings(content);
+  const hasFileOps = fileOpRegex.test(code);
 
   // Check if pathlib / Path is imported
   const importsPathlib = /(?:from\s+pathlib\s+import|\bimport\s+pathlib\b)/.test(`${content}\n${existing}`);
 
   // Check for bare open(...) call that doesn't go through Path
-  const hasBareOpen = /(?<!\.)\bopen\s*\(/.test(content);
+  const hasBareOpen = /(?<!\.)\bopen\s*\(/.test(code);
 
   if (hasFileOps && !importsPathlib) {
     throw new Error(

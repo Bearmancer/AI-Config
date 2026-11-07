@@ -47,6 +47,9 @@ function splitStatements(cmd: string): string[] {
       /^(?:\S*[\\\/])?(?:ba|da|z|k)?sh(?:\.exe)?\s+(?:-\S+\s+)*?-\w*c\w*\s+(?:"((?:[^"\\]|\\.)*)"|'([^']*)')\s*$/i,
     );
     if (wrapped) out.push(...splitStatements(wrapped[1] ?? wrapped[2] ?? ""));
+    const unquoted = stmt.match(/^(?:\S*[\\\/])?(?:ba|da|z|k)?sh(?:\.exe)?\s+(?:-\S+\s+)*?-\w*c\w*\s+(.+)$/i);
+    if (unquoted) out.push(...splitStatements(unquoted[1]));
+    for (const sub of stmt.matchAll(/\$\(([^()]*)\)/g)) out.push(...splitStatements(sub[1]));
   }
   return out;
 }
@@ -84,8 +87,9 @@ function isForbiddenPowerShellCommand(cmd: string): boolean {
     const binary = (cmdMatch[1] || cmdMatch[2] || cmdMatch[3] || "").toLowerCase();
     if (!/^(?:.*[\\\/])?(?:powershell|pwsh)(?:\.exe)?$/.test(binary)) continue;
 
-    const hasForbiddenFlags = /(?:^|\s)-(?:c(?:ommand)?|e(?:nc(?:odedcommand)?)?)\b/i.test(s);
-    if (hasForbiddenFlags) return true;
+    const flag = /(?:^|\s)-(?:c(?:ommand)?|e(?:nc(?:odedcommand)?)?)\b/i.exec(s);
+    const file = /(?:^|\s)-(?:f(?:ile)?)\s+(?:"[^"\n]+\.ps1"|'[^'\n]+\.ps1'|[^\s"';&|`()]+\.ps1)/i.exec(s);
+    if (flag && (!file || flag.index < file.index)) return true;
 
     const hasFile = /(?:^|\s)-(?:f(?:ile)?)\s+(?:"[^"\n]+\.ps1"|'[^'\n]+\.ps1'|[^\s"';&|`()]+\.ps1)/i.test(s);
     if (hasFile) continue;
@@ -97,10 +101,10 @@ function isForbiddenPowerShellCommand(cmd: string): boolean {
 }
 
 const CMD_POLICY_ERROR_MESSAGE = `[Policy Violation: forbidden-terminal-commands]
-cmd.exe is forbidden in OpenCode shells. Write a .bat (or .py) file and run it once: './task.bat' or 'uv run ./task.py'.`;
+cmd.exe is forbidden in agent shells. Write a .bat (or .py) file and run it once: './task.bat' or 'uv run ./task.py'.`;
 
 const POWERSHELL_POLICY_ERROR_MESSAGE = `[Policy Violation: forbidden-terminal-commands]
-Inline 'powershell'/'pwsh' (-Command/-EncodedCommand) is forbidden in OpenCode shells. Write a .ps1 (or .py) file and run it once: './task.ps1' or 'uv run ./task.py'.`;
+Inline 'powershell'/'pwsh' (-Command/-EncodedCommand) is forbidden in agent shells. Write a .ps1 (or .py) file and run it once: './task.ps1' or 'uv run ./task.py'.`;
 
 function inspectCommand(input: unknown): void {
   if (!input || typeof input !== "object") return;

@@ -142,5 +142,32 @@
     "disk": "from pathlib import Path\n",
     "content": "x = os.path.join('a', 'b')",
     "expect": "allow"
+  },
+  {
+    "id": "pwsh-file-arg-c",
+    "command": "pwsh -File ./task.ps1 -c foo",
+    "expect": "allow"
+  },
+  {
+    "id": "sh-c-unquoted-cmd",
+    "command": "sh -c cmd /c x",
+    "expect": "cmd"
+  },
+  {
+    "id": "dollar-substitution-cmd",
+    "command": "echo $(cmd /c x)",
+    "expect": "cmd"
+  },
+  {
+    "id": "py-string-os-not-pathlib",
+    "path": "C:/t/s.py",
+    "content": "print(\"os.listdir()\")",
+    "expect": "allow"
+  },
+  {
+    "id": "py-comment-os-not-pathlib",
+    "path": "C:/t/k.py",
+    "content": "# os.listdir()\nprint(1)",
+    "expect": "allow"
   }
 ]
