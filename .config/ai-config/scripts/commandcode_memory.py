@@ -19,13 +19,11 @@ if str(CONFIG_DIR) not in sys.path:
 from lib import jsonc  # noqa: E402
 
 SOURCES = (
-    "system/preferences.md",
     "system/agreements.md",
     "system/boundaries.md",
     "system/human.md",
     "system/persona.md",
     "system/self-aware.md",
-    "people/human/observations.md",
 )
 BRIDGE = ".commandcode/omo-memory.md"
 HEADER = "# OMO standing memory (generated; edit the OMO memory repo instead)"

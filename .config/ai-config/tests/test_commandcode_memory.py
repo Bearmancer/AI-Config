@@ -25,7 +25,7 @@ def test_write_then_check_is_clean(tmp_path):
     bridge = commandcode_memory.write(home)
     assert bridge == home / ".commandcode/omo-memory.md"
     assert commandcode_memory.check_problems(home) == []
-    assert "@~/.omo/memory/agents/global-1-abcd/repo/system/preferences.md" in bridge.read_text(
+    assert "@~/.omo/memory/agents/global-1-abcd/repo/system/agreements.md" in bridge.read_text(
         encoding="utf-8"
     )
 
@@ -46,9 +46,9 @@ def test_single_repo_without_agent_setting_is_used(tmp_path):
 
 def test_missing_source_is_reported(tmp_path):
     home, root = make_home(tmp_path, {"memory": {"agent": "global-1"}})
-    (root / "system/preferences.md").unlink()
+    (root / "system/agreements.md").unlink()
     problems = commandcode_memory.check_problems(home)
-    assert any("missing OMO memory source: system/preferences.md" in p for p in problems)
+    assert any("missing OMO memory source: system/agreements.md" in p for p in problems)
 
 
 def test_absent_memory_repo_is_stable_and_not_drift(tmp_path):

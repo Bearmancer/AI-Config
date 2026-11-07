@@ -8,7 +8,7 @@ Decision:
 - `~/.commandcode/AGENTS.md` is tracked and holds two imports: `@~/.agents/AGENTS.md` and `@~/.commandcode/omo-memory.md`.
 - `~/.commandcode/mcp.json` is tracked and defines the same ten servers as the flag-capable harnesses, with only codegraph enabled and env references in `${VAR}` form. Claude holds codegraph alone.
 - `~/.commandcode/settings.json` is tracked. `disabledSkills` is the union of OMO's disabled list and the names the owner already had off, so the mirror never re-enables a skill.
-- Setup writes `~/.commandcode/omo-memory.md`, an import-only list of OMO's standing memory (`system/*.md` plus `people/human/observations.md`). The OMO identity is resolved from `~/.omo/omo.jsonc` `memory.agent`, never hard-coded. Doctor re-derives the body and reports DRIFT on stale content.
+- Setup writes `~/.commandcode/omo-memory.md`, an import-only list of OMO's standing memory (`system/*.md`). The OMO identity is resolved from `~/.omo/omo.jsonc` `memory.agent`, never hard-coded. Doctor re-derives the body and reports DRIFT on stale content.
 - Taste stays app-managed. No taste file is tracked or edited; OMO standing preferences reach Command Code as imported memory.
 
 This record supersedes [0008](0008-memory-mirror.md)'s "no cell for memory" clause for this surface only. omo still owns the memory clone and push; the home repo only writes a read-only import list.
