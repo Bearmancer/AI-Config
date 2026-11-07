@@ -87,6 +87,10 @@ SHAPES = {
         allowed={"transport", "command", "args", "env", "enabled"},
     ),
 }
+def _key(path: str) -> str:
+    return path.casefold() if os.name == "nt" else path
+
+
 SERVERS_AT = {"omo": "mcpServers", "cline": "mcpServers", "claude": "mcpServers"}
 IMPORT_LINE_FILE = ".claude/CLAUDE.md"
 # Other places a harness could load a second instruction file from.
@@ -632,14 +636,14 @@ def tracked_set_problems(ctx: Ctx) -> list[tuple[str | None, str]]:
     allowed_run = ctx.git("ls-files", "--cached", "--others", "--exclude-standard")
     if allowed_run.returncode != 0:
         return [(None, "tracked set unreadable: git ls-files failed")]
-    allowed = {p.casefold() for p in allowed_run.stdout.splitlines()}
+    allowed = {_key(p) for p in allowed_run.stdout.splitlines()}
     reg = registry_tracked(ctx)
-    exact = {p.casefold() for _, p in reg}
+    exact = {_key(p) for _, p in reg}
     problems: list[tuple[str | None, str]] = []
     for path in sorted(allowed):
         covered = (
             path in exact
-            or path in {f.casefold() for f in FIXED_TRACKED}
+            or path in {_key(f) for f in FIXED_TRACKED}
             or path.startswith(FIXED_TRACKED_PREFIXES)
             or any(path.startswith(e + "/") for e in exact)
         )
