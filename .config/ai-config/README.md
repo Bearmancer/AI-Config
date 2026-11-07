@@ -33,7 +33,7 @@ uv run --project ~/.config/ai-config python ~/.config/ai-config/scripts/doctor.p
 
 ## The hook
 
-Drift is a hard stop. The pre-commit hook `hooks/pre-commit` runs three things in order, and any failure refuses the commit: the redaction scan of the staged files (`scripts/scan_staged.py`), `ai-config doctor`, and the test suite in `tests/`. Commit through the hook, never with `--no-verify`. The required CI check on the public repo runs the same doctor and suite. Hook scripts and shell scripts are LF on every OS, pinned by `.gitattributes`.
+Drift is a hard stop. The pre-commit hook `hooks/pre-commit` runs three things in order, and any failure refuses the commit: the redaction scan of the staged files (`scripts/scan_staged.py`), `ai-config doctor`, and the test suite in `tests/`. The suite is skipped only when every staged path is one no test reads (`skills-lock.json`, `.omo/`, `.claude/`, `.commandcode/`, `.agents/AGENTS.md`); the scan and doctor always run. Commit through the hook, never with `--no-verify`. The required CI check on the public repo runs the same doctor and suite. Hook scripts and shell scripts are LF on every OS, pinned by `.gitattributes`.
 
 Run the suite by hand:
 
