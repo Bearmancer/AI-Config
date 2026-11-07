@@ -8,6 +8,7 @@ silently partial mapping.
 from pathlib import Path
 
 import yaml
+from yaml.resolver import BaseResolver
 
 
 class _UniqueKeyLoader(yaml.SafeLoader):
@@ -25,7 +26,7 @@ def _construct_mapping(loader, node, deep=False):
 
 
 _UniqueKeyLoader.add_constructor(
-    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_mapping
+    BaseResolver.DEFAULT_MAPPING_TAG, _construct_mapping
 )
 
 

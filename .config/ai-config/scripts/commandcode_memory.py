@@ -39,7 +39,10 @@ def memory_repo(home: Path) -> tuple[Path | None, str | None]:
     if config.is_file():
         try:
             doc = jsonc.parse(config.read_text(encoding="utf-8"), strict=False)
-            agent = (doc.get("memory") or {}).get("agent")
+            if not isinstance(doc, dict):
+                raise TypeError("omo.jsonc must be a mapping")
+            memory = doc.get("memory")
+            agent = memory.get("agent") if isinstance(memory, dict) else None
         except (jsonc.JsonError, OSError, TypeError, AttributeError):
             agent = None
     if agent:

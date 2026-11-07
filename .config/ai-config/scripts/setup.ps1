@@ -203,7 +203,7 @@ finally {
 Invoke-Native 'commandcode memory bridge' { uv run --no-project python (Join-Path $ConfigDir 'scripts/commandcode_memory.py') --write }
 
 # 6. MCP entries for the apps whose files are not tracked.
-$enabled = @(uv run --no-project --with pyyaml python (Join-Path $ConfigDir 'scripts/registry_cli.py') enabled-servers $HarnessesYaml)
+$enabled = @(uv run --project $ConfigDir python (Join-Path $ConfigDir 'scripts/registry_cli.py') enabled-servers $HarnessesYaml)
 if ($LASTEXITCODE -ne 0 -or -not $enabled) { throw "cannot read shared.enabled_servers from $HarnessesYaml" }
 Set-McpServers $ClineMcp 'cline' '${env:VAR}' $false $true $servers $enabled
 Set-McpServers $ClaudeJson 'claude' '${VAR}' $true $false $servers $enabled

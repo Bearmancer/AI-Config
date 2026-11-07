@@ -24,9 +24,9 @@ Only files named in `~/.gitignore` are visible to git. Its first rule is `/*`, s
 `ai-config doctor` is `scripts/doctor.py`. It reads `harnesses.yaml` and the live files and prints one row per harness per surface: six harnesses (omo, opencode, kilo, cline, claude, commandcode) by five surfaces (instructions, mcp, skills, config, secrets). Each cell is OK, DRIFT, MISSING, NA or UNKNOWN. It exits 0 only when every cell is OK or NA, and an absent file is never OK. A cell is NA only with a reason read from the harness's own source. Doctor never writes and never prints a secret value.
 
 ```
-uv run --no-project --with pyyaml python ~/.config/ai-config/scripts/doctor.py
-uv run --no-project --with pyyaml python ~/.config/ai-config/scripts/doctor.py --repo-only
-uv run --no-project --with pyyaml python ~/.config/ai-config/scripts/doctor.py --json
+uv run --project ~/.config/ai-config python ~/.config/ai-config/scripts/doctor.py
+uv run --project ~/.config/ai-config python ~/.config/ai-config/scripts/doctor.py --repo-only
+uv run --project ~/.config/ai-config python ~/.config/ai-config/scripts/doctor.py --json
 ```
 
 `--repo-only` skips the cells that need a PC's untracked, app-owned files, so CI can run it on a bare checkout.
@@ -38,7 +38,15 @@ Drift is a hard stop. The pre-commit hook `hooks/pre-commit` runs three things i
 Run the suite by hand:
 
 ```
-uv run --no-project --with pyyaml --with pytest pytest -q ~/.config/ai-config/tests
+uv run --project ~/.config/ai-config pytest -q ~/.config/ai-config/tests
+```
+
+## Lint
+
+`ty` runs through the project env and covers the shared library and the CLI scripts; pytest fixtures are dynamically typed, so tests are out of scope. CI runs it. The pre-commit hook does not: doctor and the tests already gate every commit, and a type pass is slower.
+
+```
+uv run --project ~/.config/ai-config ty check ~/.config/ai-config/lib ~/.config/ai-config/scripts
 ```
 
 ## Where each surface lives
@@ -81,4 +89,4 @@ OpenCode Slim has three presets in `~/.config/opencode/oh-my-opencode-slim.jsonc
 
 Free OpenCode model ids come and go. `opencode models` lists what resolves today; a rung that no longer resolves is removed from the preset, never replaced by a guess.
 
-All Python runs through `uv run`, never bare python.
+All Python runs through `uv run`, never bare python. The project is `.config/ai-config/pyproject.toml`; yaml readers use `uv run --project ~/.config/ai-config`, and `--with` is not used.

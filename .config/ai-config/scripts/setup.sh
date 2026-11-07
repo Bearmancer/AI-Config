@@ -62,7 +62,7 @@ git -C "$repo" checkout -f --end-of-options "$branch"
 export AI_CONFIG_OPENCODE_CONFIG="$HOME/.config/opencode/opencode.jsonc"
 
 rc=0
-uv run --no-project --with pyyaml python - <<'PY' || rc=$?
+uv run --project "$config_dir" python - <<'PY' || rc=$?
 import json, os, re, subprocess, sys
 from pathlib import Path
 

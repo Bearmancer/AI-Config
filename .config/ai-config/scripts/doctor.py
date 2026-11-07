@@ -226,7 +226,9 @@ def servers_of(ctx: Ctx, harness: str, obj: object) -> dict | None:
 
 def is_enabled(harness: str, stanza: dict) -> bool:
     off = SHAPES[harness]["off"]
-    return not (off and stanza.get(off[0]) == off[1])
+    if isinstance(off, tuple) and len(off) == 2:
+        return stanza.get(off[0]) != off[1]
+    return True
 
 
 def shape_problems(ctx: Ctx, harness: str, name: str, stanza: object) -> list[str]:
@@ -236,7 +238,9 @@ def shape_problems(ctx: Ctx, harness: str, name: str, stanza: object) -> list[st
     if not isinstance(stanza, dict):
         return [f"{name}: stanza is not an object"]
     out = []
-    for extra in sorted(set(stanza) - shape["allowed"]):
+    allowed = shape["allowed"]
+    allowed_set = set(allowed) if isinstance(allowed, (set, list, tuple)) else set()
+    for extra in sorted(set(stanza) - allowed_set):
         out.append(f"{name}: key '{extra}' not allowed in the {harness} shape")
     if shape["type"] and stanza.get("type") != shape["type"]:
         out.append(f"{name}: type must be '{shape['type']}'")
@@ -263,8 +267,10 @@ def shape_problems(ctx: Ctx, harness: str, name: str, stanza: object) -> list[st
             rest = []
     if not ok:
         out.append(f"{name}: command has the wrong type for the {harness} shape")
-    elif not BARE_COMMAND.match(binary) or binary.lower().endswith(
-        BAD_COMMAND_SUFFIXES
+    elif (
+        not isinstance(binary, str)
+        or not BARE_COMMAND.match(binary)
+        or binary.lower().endswith(BAD_COMMAND_SUFFIXES)
     ):
         out.append(f"{name}: command is not a bare binary name")
     for arg in rest:
@@ -421,7 +427,12 @@ def check_skills(ctx: Ctx, h: str) -> Cell:
         return cell
     try:
         lock = jsonc.parse(lock_path.read_text(encoding="utf-8"), strict=True)
-        names = set(lock["skills"])
+        if not isinstance(lock, dict):
+            raise TypeError("skills-lock.json must be a mapping")
+        skills = lock.get("skills")
+        if not isinstance(skills, dict):
+            raise TypeError("skills-lock.json skills must be a mapping")
+        names = set(skills)
     except (jsonc.JsonError, KeyError, TypeError) as exc:
         cell.add(DRIFT, f"~/skills-lock.json: {exc}")
         return cell
@@ -490,6 +501,8 @@ def _commandcode_disabled(ctx: Ctx, cell: Cell) -> None:
         omo_cfg = jsonc.parse(
             (ctx.home / ".omo/omo.jsonc").read_text(encoding="utf-8"), strict=False
         )
+        if not isinstance(omo_cfg, dict):
+            raise TypeError("omo.jsonc must be a mapping")
     except (OSError, jsonc.JsonError, TypeError, AttributeError) as exc:
         cell.add(DRIFT, f"commandcode disabled-set source unreadable: {exc}")
         return
@@ -512,6 +525,8 @@ def _omo_skill_filter(ctx: Ctx, cell: Cell, present: set) -> None:
             (ctx.home / ".omo/agent/settings.jsonc").read_text(encoding="utf-8"),
             strict=False,
         )
+        if not isinstance(omo_cfg, dict) or not isinstance(core_cfg, dict):
+            raise TypeError("omo config must be a mapping")
     except (OSError, jsonc.JsonError, TypeError, AttributeError) as exc:
         cell.add(DRIFT, f"omo skill filter unreadable: {exc}")
         return
