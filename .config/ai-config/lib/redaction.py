@@ -1,16 +1,6 @@
-"""Redaction: secret-shape scanning and scrubbing on one pattern set."""
+"""Redaction: secret-shape scanning on one pattern set."""
 
 import re
-from collections.abc import Sequence
-
-
-class GateError(Exception):
-    def __init__(
-        self, message: str, *, gate: str = "secret", findings: Sequence[str] = ()
-    ) -> None:
-        super().__init__(message)
-        self.gate = gate
-        self.findings = list(findings)
 
 
 VALUE_PATTERNS = (
@@ -29,14 +19,13 @@ VALUE_PATTERNS = (
     r"-----BEGIN [A-Z ]*PRIVATE KEY-----",
     r"Bearer\s+[A-Za-z0-9._-]{16,}",
 )
-_VALUE_RES = tuple(re.compile(p) for p in VALUE_PATTERNS)
 _VALUE_ANY_RE = re.compile("|".join(f"(?:{pattern})" for pattern in VALUE_PATTERNS))
 _KEY_NAME = (
     r"[A-Za-z0-9_]*(?:API_?KEY|API_?TOKEN|TOKEN|SECRET|PASSWORD|"
     r"CLIENT_?ID|CLIENT_?SECRET|ACCESS_?KEY|PRIVATE_?KEY|AUTHORIZATION)[A-Za-z0-9_]*"
 )
 _KEY_RE = re.compile(
-    rf'"(?P<key>{_KEY_NAME})"\s*:\s*"(?P<val>[^"]{{11,}})"', re.IGNORECASE
+    rf'"(?P<key>{_KEY_NAME})"\s*:\s*"(?P<val>[^"]{{8,}})"', re.IGNORECASE
 )
 _SHELL_RE = re.compile(
     rf"^\s*(?:export\s+)?(?P<key>{_KEY_NAME})\s*=\s*(?P<val>.+?)\s*$", re.IGNORECASE
@@ -52,35 +41,33 @@ _NONSECRET_RE = re.compile(
     r"^(?:true|false|\d{1,12}|https?://|/|[A-Z]:\\|\./|(?:[A-Za-z0-9_.@-]+/)+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-)"
 )
 _REFONLY_RE = re.compile(r"\{env:|\$\{|\{file:")
-_URL_RES = tuple(
-    re.compile(p)
-    for p in (
-        r"https?://[^\s\"'<>]+",
-        r"ssh://[^\s\"'<>]+",
-        r"git@[^\s\"'<>]+",
-        r"[\w.\-]+:[\w.+~\-]+@[\w.\-]*",
-        r"[\w.\-+%]+@[\w.\-]+\.[A-Za-z]{2,}[^\s\"'<>]*",
-    )
-)
+_URL_USERINFO_RE = re.compile(r"^https?://[^/\s@]+:[^/\s@]+@")
 PLACEHOLDER_RE = re.compile(r"\{\{bws:([A-Za-z0-9_.\-]+)\}\}")
 # Strict superset of every trigger below: a line with none of these cannot
 # match a token shape, or a key whose name marks it as a credential.
 _TRIGGER_RE = re.compile(
     r"sk[-_]|tvly-|fc-|AIza|gh[pousr]_|github_pat_|glpat-|"
-    r"(?:AKIA|ASIA)|(?:hf|npm)_|xox[baprs]-|eyJ|-----BEGIN |Bearer "
+    r"(?:AKIA|ASIA)|(?:hf|npm)_|xox[baprs]-|eyJ|-----BEGIN |Bearer\s+"
     r"|API_?KEY|API_?TOKEN|TOKEN|SECRET|PASSWORD|"
     r"CLIENT_?ID|CLIENT_?SECRET|ACCESS_?KEY|PRIVATE_?KEY|AUTHORIZATION",
     re.IGNORECASE,
 )
 
 
+def _is_non_secret(value: str) -> bool:
+    candidate = value.strip().strip("\"'")
+    if _URL_USERINFO_RE.match(candidate):
+        return False
+    return bool(_NONSECRET_RE.match(candidate))
+
+
 def _suspicious_value(value: str) -> bool:
     candidate = value.strip().strip("\"'")
     return (
-        len(candidate) >= 11
+        len(candidate) >= 8
         and "(" not in candidate
         and ")" not in candidate
-        and not (_REFONLY_RE.search(candidate) or _NONSECRET_RE.match(candidate))
+        and not (_REFONLY_RE.search(candidate) or _is_non_secret(candidate))
     )
 
 
@@ -98,7 +85,7 @@ def scan_text(display: str, text: str) -> list[str]:
                 m
                 for m in _KEY_RE.finditer(line)
                 if not (
-                    _REFONLY_RE.search(v := m.group("val")) or _NONSECRET_RE.match(v)
+                    _REFONLY_RE.search(v := m.group("val")) or _is_non_secret(v)
                 )
             ),
             None,
@@ -111,32 +98,3 @@ def scan_text(display: str, text: str) -> list[str]:
         if hit := next((m for m in matches if _suspicious_value(m.group("val"))), None):
             findings.append(f"{display}:{number} (key: {hit.group('key')})")
     return findings
-
-
-def find_placeholders(display: str, text: str) -> list[str]:
-    findings: list[str] = []
-    for number, line in enumerate(text.splitlines(), start=1):
-        if "{{bws:" not in line:
-            continue
-        if PLACEHOLDER_RE.search(line):
-            findings.append(f"{display}:{number} (placeholder)")
-        elif "{{bws:" in line:
-            findings.append(f"{display}:{number} (malformed placeholder)")
-    return findings
-
-
-def scrub(text: str) -> str:
-    cleaned = text
-    for pattern in (*_VALUE_RES, *_URL_RES):
-        cleaned = pattern.sub("[redacted]", cleaned)
-    return cleaned
-
-
-def scrub_known(text: str, resolved: dict[str, str]) -> str:
-    cleaned = text
-    for uuid, value in sorted(
-        resolved.items(), key=lambda kv: len(kv[1] or ""), reverse=True
-    ):
-        if value:
-            cleaned = cleaned.replace(value, f"{{{{bws:{uuid}}}}}")
-    return cleaned
