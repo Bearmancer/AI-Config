@@ -189,7 +189,7 @@ class Ctx:
                 return False
         return bool(os.environ.get(name))
 
-    def git(self, *args: str) -> subprocess.CompletedProcess:
+    def git(self, *args: str, input: str | None = None) -> subprocess.CompletedProcess:
         repo_git = self.home / "Dev" / "AI-Config" / ".git"
         base = (
             ["git", f"--git-dir={repo_git}", f"--work-tree={self.home}"]
@@ -201,7 +201,8 @@ class Ctx:
             capture_output=True,
             text=True,
             timeout=60,
-            stdin=subprocess.DEVNULL,
+            input=input,
+            stdin=None if input is not None else subprocess.DEVNULL,
             check=False,
         )
 
@@ -666,18 +667,31 @@ def tracked_set_problems(ctx: Ctx) -> list[tuple[str | None, str]]:
             problems.append(
                 (None, f"allowlisted in .gitignore but not in harnesses.yaml: {path}")
             )
+    probes = []
     for owner, rel in reg:
         target = ctx.home / rel
         if not target.exists():
             continue
-        probe = rel + "/x" if target.is_dir() else rel
-        if ctx.git("check-ignore", "-q", probe).returncode == 0:
-            problems.append(
-                (owner, f"in harnesses.yaml but excluded by .gitignore: {rel}")
-            )
+        probes.append((owner, rel, rel + "/x" if target.is_dir() else rel))
+    if probes:
+        # One git call for every probe: a spawn costs 0.05-0.25 s, so a loop dominated the run.
+        checked = ctx.git(
+            "check-ignore", "--stdin", "-z", input="".join(p + "\0" for _, _, p in probes)
+        )
+        ignored = set(checked.stdout.split("\0")) if checked.returncode == 0 else set()
+        for owner, rel, probe in probes:
+            if probe in ignored:
+                problems.append(
+                    (owner, f"in harnesses.yaml but excluded by .gitignore: {rel}")
+                )
+    staged = ctx.git("ls-files", "-s", "--", *EXECUTABLE_TRACKED)
+    modes = {}
+    if staged.returncode == 0:
+        for line in staged.stdout.splitlines():
+            meta, _, path = line.partition("\t")
+            modes[path] = meta.split(" ", 1)[0]
     for rel in EXECUTABLE_TRACKED:
-        staged = ctx.git("ls-files", "-s", "--", rel)
-        mode = staged.stdout.split(" ", 1)[0] if staged.returncode == 0 else ""
+        mode = modes.get(rel, "")
         if mode and mode != "100755":
             problems.append(
                 (

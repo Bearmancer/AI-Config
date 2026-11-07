@@ -364,3 +364,12 @@ def test_main_loads_yaml_registry(tmp_path, monkeypatch):
     shutil.copy(CONFIG_DIR / "harnesses.yaml", tmp_path / "harnesses.yaml")
     monkeypatch.setattr(doctor, "CONFIG_DIR", tmp_path)
     assert doctor.main(["--repo-only", "--home", str(tmp_path)], env=ENV) in (0, 1)
+
+
+def test_registry_file_excluded_by_gitignore_is_drift(world):
+    home, reg = world
+    with (home / ".gitignore").open("a", encoding="utf-8") as ignore:
+        ignore.write("\n.claude/settings.json\n")
+    _, cells = states(home, reg)
+    reasons = [r for c in cells if c.state == doctor.DRIFT for r in c.reasons]
+    assert any("excluded by .gitignore: .claude/settings.json" in r for r in reasons)
