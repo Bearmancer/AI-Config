@@ -8,7 +8,7 @@ States: OK, DRIFT (present but wrong), MISSING (absent; never OK),
 NA (the harness cannot take the surface; the reason comes from harnesses.yaml),
 UNKNOWN (the check itself failed).
 
-    uv run --no-project --with pyyaml python ~/.config/ai-config/scripts/doctor.py [--json] [--repo-only]
+    uv run --project ~/.config/ai-config python ~/.config/ai-config/scripts/doctor.py [--json] [--repo-only]
 """
 
 import argparse
