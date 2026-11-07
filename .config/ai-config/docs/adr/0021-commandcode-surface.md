@@ -4,7 +4,7 @@ Context: Command Code (`cmdc`) reads skills from `~/.agents/skills`, MCP servers
 
 Decision:
 
-- `harnesses.toml` gains `[commandcode]`. The skills cell is the shared `~/.agents/skills`; `~/.commandcode/skills` is never created.
+- `harnesses.yaml` gains the `commandcode` mapping. The skills cell is the shared `~/.agents/skills`; `~/.commandcode/skills` is never created.
 - `~/.commandcode/AGENTS.md` is tracked and holds two imports: `@~/.agents/AGENTS.md` and `@~/.commandcode/omo-memory.md`.
 - `~/.commandcode/mcp.json` is tracked and defines the same ten servers as every harness, with only codegraph enabled and env references in `${VAR}` form.
 - `~/.commandcode/settings.json` is tracked. `disabledSkills` is the union of OMO's disabled list and the names the owner already had off, so the mirror never re-enables a skill.

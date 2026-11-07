@@ -5,7 +5,7 @@ Read this table first. Open only the records whose Areas column matches the area
 | ADR                                                     | Decision                                                                           | Areas                                                         |
 | ------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | [0001](0001-repo-is-master.md)                          | The home repo is the source of truth, and its files are the live files             | git dir, work tree, allowlist, writers, never-tracked files   |
-| [0002](0002-harness-registry-and-tests.md)              | One registry per harness, one test per behavior                                    | `harnesses.toml`, `scripts/doctor.py`, `tests/`               |
+| [0002](0002-harness-registry-and-tests.md)              | One registry per harness, one test per behavior                                    | `harnesses.yaml`, `scripts/doctor.py`, `tests/`               |
 | [0003](0003-app-rewritten-files.md)                     | Apps that rewrite their own files: track them in place or leave them alone         | app-owned files, `~/.claude.json`, Cline settings             |
 | [0004](0004-mcp-presets-and-tiers.md)                   | MCP servers: one stanza shape, codegraph enabled everywhere                        | MCP files, env references, disable flags                      |
 | [0005](0005-skills.md)                                  | Skills come only from npx skills; own skills live in a public repo                 | `~/skills-lock.json`, `~/.agents/skills`, Claude Code skills  |
@@ -23,8 +23,9 @@ Read this table first. Open only the records whose Areas column matches the area
 | [0017](0017-install-is-one-linear-line.md)              | One path: setup once per PC, then git pull and git push                            | `scripts/setup.ps1`, `scripts/setup.sh`, the six setup steps |
 | [0018](0018-skills-and-mcp-presets-are-independent.md)  | Skills and MCP servers are independent surfaces                                    | skills cell, mcp cell                                         |
 | [0019](0019-no-backup-artifacts.md)                     | No backup artifacts anywhere                                                       | backup files, undo history                                    |
-| [0020](0020-harness-table-owns-files-and-plugins.md)    | A harness table owns its files, and JSON configs are JSONC                         | `harnesses.toml`, `json_only`, twins                          |
+| [0020](0020-harness-table-owns-files-and-plugins.md)    | A harness table owns its files, and JSON configs are JSONC                         | `harnesses.yaml`, `json_only`, twins                          |
 | [0021](0021-commandcode-surface.md)                     | Command Code is a first-class harness; its OMO bridge is generated, never copied   | `~/.commandcode`, OMO memory bridge, taste                    |
+| [0022](0022-yaml-registry.md)                           | The harness registry is YAML                                                       | registry format, PyYAML, cutover                              |
 
 ## Citations that are not in this table
 

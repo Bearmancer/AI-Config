@@ -13,7 +13,7 @@ One of the five tools ai-config keeps in line: omo, opencode (OpenCode with Slim
 _Avoid_: Consumer, plugin, tool
 
 **Harness table**:
-The one entry in `harnesses.toml` that owns everything about a harness: its instruction file, its MCP file, its skills folder and its other config files.
+The one entry in `harnesses.yaml` that owns everything about a harness: its instruction file, its MCP file, its skills folder and its other config files.
 _Avoid_: Target row, preset
 
 **OMO**:
@@ -65,7 +65,7 @@ _Avoid_: Installer, sync
 _Avoid_: Status, checker
 
 **Registry**:
-`harnesses.toml`, the one file doctor reads to learn which live path each harness uses for each surface.
+`harnesses.yaml`, the one file doctor reads to learn which live path each harness uses for each surface.
 _Avoid_: Config, manifest
 
 **Surface**:

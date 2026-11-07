@@ -1,7 +1,7 @@
 """Doctor tests: a clean fake home is all OK; each break lands in the right cell.
 
 The fake home is a real folder with `git init`, the real .gitignore allowlist
-and the real harnesses.toml, so the tracked-set check runs for real. Secret
+and the real harnesses.yaml, so the tracked-set check runs for real. Secret
 fixtures carry a ``~`` and ``fx`` removes it at run time, so this file passes
 the redaction scan.
 """
@@ -9,12 +9,12 @@ the redaction scan.
 import json
 import shutil
 import subprocess
-import tomllib
 from pathlib import Path
 
 import pytest
 
 from lib import jsonc
+from lib.yaml_config import load_registry
 from scripts import doctor
 
 CONFIG_DIR = Path(doctor.__file__).resolve().parent.parent
@@ -85,7 +85,7 @@ def build_mcp(home, reg, h):
 
 @pytest.fixture
 def world(tmp_path):
-    reg = tomllib.loads((CONFIG_DIR / "harnesses.toml").read_text(encoding="utf-8"))
+    reg = load_registry(CONFIG_DIR / "harnesses.yaml")
     home = tmp_path / "home"
     home.mkdir()
     subprocess.run(["git", "init", "-q", str(home)], check=True)
@@ -358,3 +358,9 @@ def test_jsonc_dialects():
         jsonc.parse('{"a": 1, // c\n}', strict=True)
     with pytest.raises(jsonc.JsonError, match="duplicate key 'k'"):
         jsonc.parse('[{"k": 1, "k": 2}]', strict=True)
+
+
+def test_main_loads_yaml_registry(tmp_path, monkeypatch):
+    shutil.copy(CONFIG_DIR / "harnesses.yaml", tmp_path / "harnesses.yaml")
+    monkeypatch.setattr(doctor, "CONFIG_DIR", tmp_path)
+    assert doctor.main(["--repo-only", "--home", str(tmp_path)], env=ENV) in (0, 1)

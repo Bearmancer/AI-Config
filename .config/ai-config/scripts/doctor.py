@@ -1,14 +1,14 @@
 """ai-config doctor: one parity cell per harness per surface.
 
-Reads harnesses.toml and the live files. Prints one row per cell and exits 0
+Reads harnesses.yaml and the live files. Prints one row per cell and exits 0
 only when every cell is OK or NA. It never writes or fixes anything and never
 prints a secret value (only variable names, file names and line numbers).
 
 States: OK, DRIFT (present but wrong), MISSING (absent; never OK),
-NA (the harness cannot take the surface; the reason comes from harnesses.toml),
+NA (the harness cannot take the surface; the reason comes from harnesses.yaml),
 UNKNOWN (the check itself failed).
 
-    uv run --no-project python ~/.config/ai-config/scripts/doctor.py [--json] [--repo-only]
+    uv run --no-project --with pyyaml python ~/.config/ai-config/scripts/doctor.py [--json] [--repo-only]
 """
 
 import argparse
@@ -17,7 +17,6 @@ import os
 import re
 import subprocess
 import sys
-import tomllib
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -29,13 +28,14 @@ if str(CONFIG_DIR) not in sys.path:
 
 from lib import jsonc  # noqa: E402
 from lib.redaction import scan_text  # noqa: E402
+from lib.yaml_config import load_registry  # noqa: E402
 from scripts import commandcode_memory  # noqa: E402
 
 SURFACES = ("instructions", "mcp", "skills", "config", "secrets")
 
 
 def harness_names(registry: dict) -> list[str]:
-    """Every harness table in harnesses.toml, in file order."""
+    """Every harness mapping in harnesses.yaml, in file order."""
     return [name for name in registry if name != "shared"]
 
 OK, DRIFT, MISSING, NA, UNKNOWN = "OK", "DRIFT", "MISSING", "NA", "UNKNOWN"
@@ -474,7 +474,7 @@ def _commandcode_disabled(ctx: Ctx, cell: Cell) -> None:
         None,
     )
     if settings is None:
-        cell.add(DRIFT, "harnesses.toml [commandcode] files lacks settings.json")
+        cell.add(DRIFT, "harnesses.yaml [commandcode] files lacks settings.json")
         return
     doc, problems = ctx.read_json(settings)
     for state, reason in problems:
@@ -626,7 +626,7 @@ def registry_tracked(ctx: Ctx) -> list[tuple[str, str]]:
 
 
 def tracked_set_problems(ctx: Ctx) -> list[tuple[str | None, str]]:
-    """Disagreements between the .gitignore allowlist and harnesses.toml."""
+    """Disagreements between the .gitignore allowlist and harnesses.yaml."""
     if not (ctx.home / ".gitignore").is_file():
         return [(None, "absent: ~/.gitignore")]
     allowed_run = ctx.git("ls-files", "--cached", "--others", "--exclude-standard")
@@ -645,7 +645,7 @@ def tracked_set_problems(ctx: Ctx) -> list[tuple[str | None, str]]:
         )
         if not covered:
             problems.append(
-                (None, f"allowlisted in .gitignore but not in harnesses.toml: {path}")
+                (None, f"allowlisted in .gitignore but not in harnesses.yaml: {path}")
             )
     for owner, rel in reg:
         target = ctx.home / rel
@@ -654,7 +654,7 @@ def tracked_set_problems(ctx: Ctx) -> list[tuple[str | None, str]]:
         probe = rel + "/x" if target.is_dir() else rel
         if ctx.git("check-ignore", "-q", probe).returncode == 0:
             problems.append(
-                (owner, f"in harnesses.toml but excluded by .gitignore: {rel}")
+                (owner, f"in harnesses.yaml but excluded by .gitignore: {rel}")
             )
     for rel in EXECUTABLE_TRACKED:
         staged = ctx.git("ls-files", "-s", "--", rel)
@@ -726,9 +726,7 @@ def main(argv: list[str] | None = None, env: Mapping | None = None) -> int:
         "--home", type=Path, default=Path.home(), help="home folder to check"
     )
     args = parser.parse_args(argv)
-    registry = tomllib.loads(
-        (CONFIG_DIR / "harnesses.toml").read_text(encoding="utf-8")
-    )
+    registry = load_registry(CONFIG_DIR / "harnesses.yaml")
     cells = run(args.home, registry, env, args.repo_only)
     code = exit_code(cells)
     if args.json:

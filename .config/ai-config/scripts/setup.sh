@@ -14,7 +14,7 @@
 #   5. Generate ~/.commandcode/omo-memory.md, the import-only bridge to OMO
 #      standing memory.
 #   6. Write the OpenCode MCP server set into the app-owned Cline and Claude files:
-#      Cline holds every server with all but the harnesses.toml [shared] enabled_servers
+#      Cline holds every server with all but the harnesses.yaml shared enabled_servers
 #      set to disabled; Claude holds only the enabled servers.
 #
 # Usage: setup.sh <remote> [branch]. Needs git, bws, npx, uv, BWS_ACCESS_TOKEN.
@@ -62,9 +62,13 @@ git -C "$repo" checkout -f --end-of-options "$branch"
 export AI_CONFIG_OPENCODE_CONFIG="$HOME/.config/opencode/opencode.jsonc"
 
 rc=0
-uv run --no-project python - <<'PY' || rc=$?
-import json, os, re, subprocess, sys, tomllib
+uv run --no-project --with pyyaml python - <<'PY' || rc=$?
+import json, os, re, subprocess, sys
 from pathlib import Path
+
+CONFIG_DIR = Path.home() / ".config/ai-config"
+sys.path.insert(0, str(CONFIG_DIR))
+from lib.yaml_config import load_registry
 
 ENV_REF = re.compile(r"\{env:([A-Za-z_][A-Za-z0-9_]*)\}")
 # bws prefix for an MCP env var is the var minus _API_KEY, unless listed here (prefix -> bws prefix).
@@ -112,9 +116,7 @@ def resolve(var, secrets):
 
 
 servers = load_jsonc(Path(os.environ["AI_CONFIG_OPENCODE_CONFIG"]).read_text("utf-8"))["mcp"]["servers"]
-enabled = set(
-    tomllib.loads((Path.home() / ".config/ai-config/harnesses.toml").read_text("utf-8"))["shared"]["enabled_servers"]
-)
+enabled = set(load_registry(CONFIG_DIR / "harnesses.yaml")["shared"]["enabled_servers"])
 variables = sorted(
     {m for s in servers.values() for v in s.get("environment", {}).values() for m in ENV_REF.findall(v)}
 )

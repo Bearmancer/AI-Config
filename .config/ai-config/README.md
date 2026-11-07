@@ -21,12 +21,12 @@ Only files named in `~/.gitignore` are visible to git. Its first rule is `/*`, s
 
 ## Doctor
 
-`ai-config doctor` is `scripts/doctor.py`. It reads `harnesses.toml` and the live files and prints one row per harness per surface: six harnesses (omo, opencode, kilo, cline, claude, commandcode) by five surfaces (instructions, mcp, skills, config, secrets). Each cell is OK, DRIFT, MISSING, NA or UNKNOWN. It exits 0 only when every cell is OK or NA, and an absent file is never OK. A cell is NA only with a reason read from the harness's own source. Doctor never writes and never prints a secret value.
+`ai-config doctor` is `scripts/doctor.py`. It reads `harnesses.yaml` and the live files and prints one row per harness per surface: six harnesses (omo, opencode, kilo, cline, claude, commandcode) by five surfaces (instructions, mcp, skills, config, secrets). Each cell is OK, DRIFT, MISSING, NA or UNKNOWN. It exits 0 only when every cell is OK or NA, and an absent file is never OK. A cell is NA only with a reason read from the harness's own source. Doctor never writes and never prints a secret value.
 
 ```
-uv run --no-project python ~/.config/ai-config/scripts/doctor.py
-uv run --no-project python ~/.config/ai-config/scripts/doctor.py --repo-only
-uv run --no-project python ~/.config/ai-config/scripts/doctor.py --json
+uv run --no-project --with pyyaml python ~/.config/ai-config/scripts/doctor.py
+uv run --no-project --with pyyaml python ~/.config/ai-config/scripts/doctor.py --repo-only
+uv run --no-project --with pyyaml python ~/.config/ai-config/scripts/doctor.py --json
 ```
 
 `--repo-only` skips the cells that need a PC's untracked, app-owned files, so CI can run it on a bare checkout.
@@ -38,7 +38,7 @@ Drift is a hard stop. The pre-commit hook `hooks/pre-commit` runs three things i
 Run the suite by hand:
 
 ```
-uv run --no-project --with pytest pytest -q ~/.config/ai-config/tests
+uv run --no-project --with pyyaml --with pytest pytest -q ~/.config/ai-config/tests
 ```
 
 ## Where each surface lives
@@ -48,7 +48,7 @@ uv run --no-project --with pytest pytest -q ~/.config/ai-config/tests
 | instructions | `~/.agents/AGENTS.md`, the only instruction content; `~/.claude/CLAUDE.md` and `~/.commandcode/AGENTS.md` hold import lines only                                   | git                                                        |
 | MCP servers  | `~/.omo/agent/mcp.json`, `~/.config/opencode/opencode.jsonc`, `~/.config/kilo/kilo.jsonc`, `~/.commandcode/mcp.json`; untracked: `~/.cline/data/settings/cline_mcp_settings.json`, `~/.claude.json` | git for the tracked files, the setup script for the last two |
 | skills       | `~/.agents/skills` and `~/.claude/skills`, both matching `~/skills-lock.json`; Command Code reads `~/.agents/skills`                                                        | `npx skills`                                               |
-| config       | the files each harness table in `harnesses.toml` names                                                                                                                   | git, and the app when it rewrites its own file in place    |
+| config       | the files each harness mapping in `harnesses.yaml` names                                                                                                                   | git, and the app when it rewrites its own file in place    |
 | secrets      | per-PC user environment variables                                                                                                                                        | the setup script, from bws                                 |
 
 Never tracked: `~/.claude.json`, `~/.cline/data/**`, the Magic Context database, and any file holding a literal secret.

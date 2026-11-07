@@ -8,7 +8,7 @@ echo "pre-commit: redaction scan of staged files" >&2
 uv run --no-project python "$cfg/scripts/scan_staged.py" || exit 1
 
 echo "pre-commit: ai-config doctor" >&2
-uv run --no-project python "$cfg/scripts/doctor.py" || exit 1
+uv run --no-project --with pyyaml python "$cfg/scripts/doctor.py" || exit 1
 
 echo "pre-commit: test suite" >&2
-uv run --no-project --with pytest pytest -q -p no:cacheprovider "$cfg/tests" || exit 1
+uv run --no-project --with pyyaml --with pytest pytest -q -p no:cacheprovider "$cfg/tests" || exit 1

@@ -43,6 +43,16 @@
 !/.config/
 /.config/*
 !/.config/ai-config/
+!/.config/ai-config/harnesses.yaml
+!/.config/ai-config/lib/yaml_config.py
+!/.config/ai-config/scripts/registry_cli.py
+!/.config/ai-config/docs/adr/0022-yaml-registry.md
+!/.config/ai-config/tests/test_docs_registry.py
+!/.config/ai-config/tests/test_entrypoints.py
+!/.config/ai-config/tests/test_registry_cli.py
+!/.config/ai-config/tests/test_registry_cutover.py
+!/.config/ai-config/tests/test_registry_schema.py
+!/.config/ai-config/tests/test_yaml_config.py
 !/.config/kilo/
 /.config/kilo/*
 !/.config/kilo/kilo.jsonc

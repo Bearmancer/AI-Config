@@ -16,7 +16,7 @@ One-shot per-PC setup: puts the AI-Config repo in place at $HOME and wires the a
    per call; multi-name -s fails on some sources) to fill ~/.claude/skills.
 5. Generates ~/.commandcode/omo-memory.md, the import-only bridge to OMO standing memory.
 6. Writes the OpenCode MCP server set into the app-owned Cline and Claude files:
-   Cline holds every server with all but the harnesses.toml [shared] enabled_servers
+   Cline holds every server with all but the harnesses.yaml shared enabled_servers
    set to disabled; Claude holds only the enabled servers.
 
 Run once per PC. Needs git, bws, npx and BWS_ACCESS_TOKEN.
@@ -39,7 +39,7 @@ $Report = Join-Path $Repo 'live-vs-repo.diff'
 $OpenCodeConfig = Join-Path $HOME '.config/opencode/opencode.jsonc'
 $ClineMcp = Join-Path $HOME '.cline/data/settings/cline_mcp_settings.json'
 $ClaudeJson = Join-Path $HOME '.claude.json'
-$HarnessesToml = Join-Path $ConfigDir 'harnesses.toml'
+$HarnessesYaml = Join-Path $ConfigDir 'harnesses.yaml'
 # bws prefix for an MCP env var is the var minus _API_KEY, unless listed here (prefix -> bws prefix).
 $PrefixAlias = @{ SGAI = 'SCRAPEGRAPHAI' }
 $EnvRef = '\{env:([A-Za-z_][A-Za-z0-9_]*)\}'
@@ -201,8 +201,8 @@ finally {
 Invoke-Native 'commandcode memory bridge' { uv run --no-project python (Join-Path $ConfigDir 'scripts/commandcode_memory.py') --write }
 
 # 6. MCP entries for the apps whose files are not tracked.
-$enabled = @(uv run --no-project python -c "import tomllib,sys;print('\n'.join(tomllib.load(open(sys.argv[1],'rb'))['shared']['enabled_servers']))" $HarnessesToml)
-if ($LASTEXITCODE -ne 0 -or -not $enabled) { throw "cannot read [shared] enabled_servers from $HarnessesToml" }
+$enabled = @(uv run --no-project --with pyyaml python (Join-Path $ConfigDir 'scripts/registry_cli.py') enabled-servers $HarnessesYaml)
+if ($LASTEXITCODE -ne 0 -or -not $enabled) { throw "cannot read shared.enabled_servers from $HarnessesYaml" }
 Set-McpServers $ClineMcp 'cline' '${env:VAR}' $false $true $servers $enabled
 Set-McpServers $ClaudeJson 'claude' '${VAR}' $true $false $servers $enabled
 
