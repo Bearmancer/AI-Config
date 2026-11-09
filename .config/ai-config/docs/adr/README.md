@@ -17,16 +17,17 @@ Read this table first. Open only the records whose Areas column matches the area
 | [0011](0011-lessons-home.md)                            | Lessons have one home each                                                         | agent lessons, hooks, antipattern doc                         |
 | [0012](0012-github-is-the-only-record.md)               | GitHub is the only record                                                          | issues, pull requests, worktrees                              |
 | [0013](0013-skills-pin-refs-and-gate-memory-restore.md) | The skills lock pins every skill; npx skills is the only writer                    | `~/skills-lock.json`, the restore command                     |
-| [0014](0014-instructions-are-import-lines.md)           | One instruction file, `~/.agents/AGENTS.md`, and each harness loads it its own way | instruction loading, `~/.claude/CLAUDE.md`, the omo NA cell   |
+| [0014](0014-instructions-are-import-lines.md)           | One instruction file, `~/.agents/AGENTS.md`, and each harness loads it its own way | instruction loading, `~/.claude/CLAUDE.md`, the omo hard link |
 | [0015](0015-kilo-settings-merge-into-one-file.md)       | Kilo keeps all its settings in one tracked file                                    | `~/.config/kilo/kilo.jsonc`                                   |
 | [0016](0016-no-deprecated-config-keys.md)               | No harness config holds a deprecated key                                           | every harness config                                          |
-| [0017](0017-install-is-one-linear-line.md)              | One path: setup once per PC, then git pull and git push                            | `scripts/setup.ps1`, `scripts/setup.sh`, the six setup steps |
+| [0017](0017-install-is-one-linear-line.md)              | One path: setup once per PC, then git pull and git push                            | `scripts/setup.ps1`, `scripts/setup.sh`, the seven setup steps |
 | [0018](0018-skills-and-mcp-presets-are-independent.md)  | Skills and MCP servers are independent surfaces                                    | skills cell, mcp cell                                         |
 | [0019](0019-no-backup-artifacts.md)                     | No backup artifacts anywhere                                                       | backup files, undo history                                    |
 | [0020](0020-harness-table-owns-files-and-plugins.md)    | A harness table owns its files, and JSON configs are JSONC                         | `harnesses.yaml`, `json_only`, twins                          |
 | [0021](0021-commandcode-surface.md)                     | Command Code is a first-class harness; its OMO bridge is generated, never copied   | `~/.commandcode`, OMO memory bridge, taste                    |
 | [0022](0022-yaml-registry.md)                           | The harness registry is YAML                                                       | registry format, PyYAML, cutover                              |
 | [0023](0023-pyyaml-via-uv-project.md)                   | pyyaml, pytest, and ty run from one AI-Config uv project                           | project env, `uv run --project`, lint                         |
+| [0024](0024-never-disable-free-models.md)               | Free models are never disabled                                                     | free ids, whitelists, excludes                                |
 
 ## Citations that are not in this table
 

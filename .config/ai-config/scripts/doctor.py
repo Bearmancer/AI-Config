@@ -321,13 +321,25 @@ def _has_content(path: Path) -> bool:
     )
 
 
+def _same_file(a: Path, b: Path) -> bool:
+    try:
+        return os.path.samefile(a, b)
+    except OSError:
+        return False
+
+
 def check_instructions(ctx: Ctx, h: str) -> Cell:
     cell = Cell(h, "instructions")
     spec = ctx.reg[h]["instructions"]
     seconds = [*SECOND_INSTRUCTIONS.get(h, ()), HOME_INSTRUCTIONS]
+    canon = ctx.path(spec["path"]) if "path" in spec else None
     for rel in seconds:
-        if _has_content(ctx.home / rel):
-            cell.add(DRIFT, f"second instruction file has content: ~/{rel}")
+        p = ctx.home / rel
+        if not _has_content(p):
+            continue
+        if canon is not None and _same_file(p, canon):
+            continue
+        cell.add(DRIFT, f"second instruction file has content: ~/{rel}")
     if "na" in spec:
         if cell.state == OK:
             cell.state, cell.reasons = NA, [spec["na"]]
@@ -337,6 +349,16 @@ def check_instructions(ctx: Ctx, h: str) -> Cell:
         cell.add(MISSING, f"absent: {spec['path']}")
     elif not _has_content(path):
         cell.add(DRIFT, f"empty: {spec['path']}")
+    link_rel = spec.get("link")
+    if link_rel is not None:
+        p = ctx.path(link_rel)
+        if not p.is_file():
+            cell.add(MISSING, f"absent: {link_rel}")
+        elif not _same_file(p, path):
+            cell.add(
+                DRIFT,
+                f"{link_rel} is a copy; it must be the same file instance as {spec['path']}",
+            )
     if h in ("opencode", "kilo"):
         obj, problems = ctx.read_json(ctx.reg[h]["mcp"])
         for state, reason in problems:

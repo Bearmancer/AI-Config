@@ -34,7 +34,10 @@ shared:
 
 omo:
   instructions:
-    na: "senpi loads global context only from ~/.omo/agent/ and has no setting that names another path"
+    path: "~/.agents/AGENTS.md"
+    tracked: true
+    via: "senpi loads ~/.omo/agent/AGENTS.md as global context; the file is a hard link, the same instance as ~/.agents/AGENTS.md"
+    link: "~/.omo/agent/AGENTS.md"
   mcp:
     path: "~/.omo/agent/mcp.json"
     tracked: true
@@ -91,6 +94,8 @@ opencode:
     - path: "~/.config/opencode/plugins/python-cli-utf8.ts"
       tracked: true
     - path: "~/.config/opencode/plugins/uv-only-python.ts"
+      tracked: true
+    - path: "~/.config/opencode/service/opencode-service-runner.ps1"
       tracked: true
     - path: "~/.config/cortexkit/magic-context.jsonc"
       tracked: true

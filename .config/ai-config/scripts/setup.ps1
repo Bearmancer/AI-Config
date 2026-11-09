@@ -199,6 +199,14 @@ finally {
     Remove-Item Env:GIT_CONFIG_COUNT, Env:GIT_CONFIG_KEY_0, Env:GIT_CONFIG_VALUE_0, Env:GIT_CONFIG_KEY_1, Env:GIT_CONFIG_VALUE_1
 }
 
+# 4b. omo reads global instructions from ~/.omo/agent; wire the same file instance there.
+Invoke-Native 'omo instruction hard link' {
+    if (-not (Test-Path "C:\Users\Lance\.omo\agent\AGENTS.md")) {
+        if (-not (Test-Path "C:\Users\Lance\.omo\agent")) { New-Item -ItemType Directory -Path "C:\Users\Lance\.omo\agent" -Force | Out-Null }
+        New-Item -ItemType HardLink -Path "C:\Users\Lance\.omo\agent\AGENTS.md" -Target "C:\Users\Lance\.agents\AGENTS.md" | Out-Null
+    }
+}
+
 # 5. Command Code memory bridge: imports OMO standing rules; never a copy.
 Invoke-Native 'commandcode memory bridge' { uv run --no-project python (Join-Path $ConfigDir 'scripts/commandcode_memory.py') --write }
 

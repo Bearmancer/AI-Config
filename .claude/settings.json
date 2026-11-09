@@ -9,12 +9,14 @@
       "PowerShell(Get-ChildItem *)",
       "PowerShell(Select-String *)",
       "PowerShell(Test-Path *)",
-      "PowerShell(Get-Command *)"
+      "PowerShell(Get-Command *)",
+      "mcp__codegraph__*"
     ],
     "defaultMode": "auto"
   },
   "model": "claude-sonnet-5-5",
   "availableModels": [
+    "claude-opus-5-5",
     "claude-sonnet-5-5",
     "claude-haiku-5-5"
   ],
@@ -62,5 +64,17 @@
   "remoteControlAtStartup": true,
   "crossSessionInbound": "accept",
   "inputNeededNotifEnabled": true,
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "codegraph.cmd prompt-hook"
+          }
+        ]
+      }
+    ]
+  }
 }

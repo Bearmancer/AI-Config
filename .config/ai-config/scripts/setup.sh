@@ -190,6 +190,12 @@ PY
 	done
 )
 
+# 4b. omo reads global instructions from ~/.omo/agent; wire the same file instance there.
+if [ ! -e "$HOME/.omo/agent/AGENTS.md" ]; then
+    mkdir -p "$HOME/.omo/agent"
+    ln "$HOME/.agents/AGENTS.md" "$HOME/.omo/agent/AGENTS.md"
+fi
+
 # 5. Command Code memory bridge: imports OMO standing rules; never a copy.
 uv run --no-project python "$config_dir/scripts/commandcode_memory.py" --write
 

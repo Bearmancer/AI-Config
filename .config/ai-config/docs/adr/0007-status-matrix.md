@@ -7,7 +7,7 @@ Decision: `scripts/doctor.py` is read-only. It prints one row per cell with a st
 - OK: the file is present and correct.
 - DRIFT: present but wrong, for example a second enabled server, a twin copy or a flag in the wrong dialect.
 - MISSING: absent. A missing file is never OK, and a missing app-owned file is MISSING too.
-- NA: the harness cannot take the surface, with a reason read from the harness's own source and recorded in `harnesses.yaml`. Today omo's instructions cell is NA, because senpi loads a global instruction file only from `~/.omo/agent/` and has no setting for another path.
+- NA: the harness cannot take the surface, with a reason read from the harness's own source and recorded in `harnesses.yaml`. omo's instructions cell used to be NA (senpi loads a global instruction file only from `~/.omo/agent/` and had no setting for another path); it is now OK, because `~/.omo/agent/AGENTS.md` is a hard link to the one tracked instruction file and doctor verifies instance identity (see [0014](0014-instructions-are-import-lines.md)).
 - UNKNOWN: the check itself failed.
 
 `--json` prints the same cells as data. `--repo-only` marks the cells that need a PC's untracked, app-owned files as NA, so a bare checkout (CI) can run it. A drifting cell makes the exit code 1, and the pre-commit hook refuses the commit (see [0001](0001-repo-is-master.md)).

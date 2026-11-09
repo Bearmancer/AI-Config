@@ -3,14 +3,14 @@
   "enabledModels": [
     "anthropic-subscription/claude-sonnet-5-5",
     "anthropic-subscription/claude-haiku-5-5",
-    "qwen-token-plan/qwen3.8-flash",
+    "qwen-token-plan/qwen3.8-flash"
   ],
   "hideThinkingBlock": true,
   "defaultProvider": "anthropic-subscription",
   "favoriteModels": [
     "anthropic-subscription/claude-sonnet-5-5",
     "anthropic-subscription/claude-haiku-5-5",
-    "qwen-token-plan/qwen3.8-flash",
+    "qwen-token-plan/qwen3.8-flash"
   ],
   "defaultProjectTrust": "always",
   "autocompleteMaxVisible": 10,
@@ -23,7 +23,6 @@
   "showHardwareCursor": true,
   "steeringMode": "all",
   "showCacheMissNotices": true,
-  // Core skill filter for ~/.agents/skills (omo.jsonc disabled_skills covers bundled skills only).
   "skills": [
     "!**/academic-paper",
     "!**/academic-paper-reviewer",
@@ -112,6 +111,11 @@
     "!**/verification-before-completion",
     "!**/wait-what",
     "!**/writing-plans",
-    "!**/writing-skills",
+    "!**/writing-skills"
   ],
+  "markdown": {
+    "mermaid": "streaming"
+  },
+  "quietStartup": false,
+  "collapseChangelog": false
 }

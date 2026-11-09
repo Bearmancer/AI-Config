@@ -7,6 +7,7 @@ the redaction scan.
 """
 
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -91,6 +92,8 @@ def world(tmp_path):
     subprocess.run(["git", "init", "-q", str(home)], check=True)
     shutil.copy(REAL_GITIGNORE, home / ".gitignore")
     write(home, ".agents/AGENTS.md", "rules\n")
+    (home / ".omo/agent").mkdir(parents=True, exist_ok=True)
+    os.link(home / ".agents/AGENTS.md", home / ".omo/agent/AGENTS.md")
     write(home, ".claude/CLAUDE.md", "@~/.agents/AGENTS.md\n")
     write(home, "skills-lock.json", json.dumps({"version": 1, "skills": {"alpha": {}}}))
     write(home, ".agents/skills/alpha/SKILL.md", "# alpha\n")
@@ -123,8 +126,7 @@ def test_clean_home_is_all_ok_or_na(world):
     by, cells = states(home, reg)
     assert len(cells) == len(doctor.harness_names(reg)) * len(doctor.SURFACES)
     assert {c.state for c in cells} <= {doctor.OK, doctor.NA}
-    assert by["omo", "instructions"].state == doctor.NA
-    assert by["omo", "instructions"].reasons == [reg["omo"]["instructions"]["na"]]
+    assert by["omo", "instructions"].state == doctor.OK
     assert doctor.main(["--home", str(home)], env=ENV) == 0
 
 

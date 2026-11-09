@@ -187,6 +187,12 @@
       "skillPath": "skills/exa-search/SKILL.md",
       "computedHash": "fe0af7df341534be6ed0fe50610c7c1fee2d47f1642251feaebc91c183cbdd4f"
     },
+    "execute-rigorously": {
+      "source": "./local",
+      "sourceType": "local",
+      "skillPath": "execute-rigorously/SKILL.md",
+      "computedHash": "3617b75fc076197ae96dacb781ebd1b4def91881a4b9fa39a69065745394be6b"
+    },
     "executing-plans": {
       "source": "obra/superpowers",
       "sourceType": "github",
@@ -421,6 +427,12 @@
       "skillPath": "performance-optimization/SKILL.md",
       "computedHash": "276aec00aaabae98f4bd6d565745378b498e0d11688315f32179587746b93805"
     },
+    "plan-rigorously": {
+      "source": "./local",
+      "sourceType": "local",
+      "skillPath": "plan-rigorously/SKILL.md",
+      "computedHash": "6c172e633795f670d57e22dade38834336838db1bc9147bd0258a16951e20c1f"
+    },
     "planning-and-task-breakdown": {
       "source": "./local",
       "sourceType": "local",
@@ -449,7 +461,7 @@
       "source": "Bearmancer/skills",
       "sourceType": "github",
       "skillPath": "ps-wizard/SKILL.md",
-      "computedHash": "b9afc8e0f0c0dae6cef0aadd720a39de8effb1b69c0a171a74213254b1437120"
+      "computedHash": "1aac8694ea0ebc621a40a4d41bad232b2907283f7b5ea7d5bf01695e7a341512"
     },
     "purge-safety": {
       "source": "Bearmancer/skills",
@@ -486,12 +498,6 @@
       "sourceType": "local",
       "skillPath": "rigorous-debugging/SKILL.md",
       "computedHash": "b668246d0dc183403a020ec2f83b31d68f284bbc25901bda540b3793ae947336"
-    },
-    "rigorous-planning": {
-      "source": "Bearmancer/skills",
-      "sourceType": "github",
-      "skillPath": "rigorous-planning/SKILL.md",
-      "computedHash": "0500d1bdfd4751e2d96ed556f85f7bc75581cbb7d6ccbe238c7e4dae31ae209f"
     },
     "rigorous-research": {
       "source": "Bearmancer/skills",
@@ -654,6 +660,12 @@
       "sourceType": "github",
       "skillPath": "skills/engineering/wayfinder/SKILL.md",
       "computedHash": "22338d9356ef84430c5ca916f2632f226583d9d7366433f62bfde5b1b6781e9e"
+    },
+    "web-cli-research": {
+      "source": "./local",
+      "sourceType": "local",
+      "skillPath": "web-cli-research/SKILL.md",
+      "computedHash": "13646f608fb8260129d6544e758ba729e9dcd894d68de0b4ca49c71abc54614c"
     },
     "work-audit": {
       "source": "Bearmancer/skills",

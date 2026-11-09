@@ -77,6 +77,14 @@
 !/.config/opencode/plugins/forbidden-terminal-commands.ts
 !/.config/opencode/plugins/force-pathlib.ts
 !/.config/opencode/plugins/ps1-lint-guard.ts
+!/.config/opencode/service/
+!/.config/opencode/service/opencode-service-runner.ps1
 !/.config/opencode/plugins/python-cli-utf8.ts
 !/.config/opencode/plugins/uv-only-python.ts
 .slim/deepwork/
+
+# Noise: never track caches
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
