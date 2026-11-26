@@ -129,7 +129,7 @@ A pointer to an environment variable inside a stanza, in the harness's own synta
 _Avoid_: Placeholder, token
 
 **Disabled server**:
-A server defined in a harness's MCP file but switched off by that harness's flag. Only codegraph is enabled everywhere; Claude Code, which has no per-server flag at user scope, holds codegraph alone.
+A server defined in a harness's MCP file but switched off by that harness's flag. Only codegraph is enabled everywhere; OpenCode additionally runs the web lane (browse, exa, firecrawl, tavily, zenrows). Claude Code, which has no per-server flag at user scope, holds codegraph alone.
 _Avoid_: Removed server
 
 **Secrets cell**:

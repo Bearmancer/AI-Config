@@ -23,6 +23,7 @@ REAL_GITIGNORE = CONFIG_DIR.parents[1] / ".gitignore"
 NAMES = (
     "agentql",
     "arxiv",
+    "browse",
     "codegraph",
     "dappier",
     "exa",
@@ -30,6 +31,7 @@ NAMES = (
     "paper-search",
     "scrapegraph",
     "tavily",
+    "zenrows",
     "zotero",
 )
 KEYS = {
@@ -39,6 +41,7 @@ KEYS = {
     "firecrawl": "FIRECRAWL_API_KEY",
     "scrapegraph": "SGAI_API_KEY",
     "tavily": "TAVILY_API_KEY",
+    "zenrows": "ZENROWS_API_KEY",
     "zotero": "ZOTERO_API_KEY",
 }
 ENV = {key: "set" for key in KEYS.values()}
@@ -50,6 +53,7 @@ def fx(text):
 
 def stanza(h, reg, name):
     shape = doctor.SHAPES[h]
+    enabled = set(reg[h]["mcp"].get("enabled_servers") or reg["shared"]["enabled_servers"])
     argv = ["serve", "--mcp"] if name == "codegraph" else []
     s = {"type": shape["type"]} if shape["type"] else {}
     if shape["cmd"] == "list":
@@ -61,7 +65,7 @@ def stanza(h, reg, name):
         s[shape["env"]] = {KEYS[name]: ref}
         if name == "zotero":
             s[shape["env"]]["ZOTERO_LIBRARY_ID"] = "123"
-    if shape["off"] and name != "codegraph":
+    if shape["off"] and name not in enabled:
         s[shape["off"][0]] = shape["off"][1]
     return s
 
@@ -152,11 +156,11 @@ def test_second_enabled_server_is_drift(world):
     home, reg = world
     path = home / ".config/opencode/opencode.jsonc"
     doc = json.loads(path.read_text(encoding="utf-8"))
-    del doc["mcp"]["servers"]["exa"]["disabled"]
+    del doc["mcp"]["servers"]["agentql"]["disabled"]
     path.write_text(json.dumps(doc, indent=1), encoding="utf-8")
     by, cells = states(home, reg)
     assert by["opencode", "mcp"].state == doctor.DRIFT
-    assert "exa" in by["opencode", "mcp"].reasons[0]
+    assert "agentql" in by["opencode", "mcp"].reasons[0]
     assert doctor.exit_code(cells) == 1
 
 

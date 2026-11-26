@@ -31,6 +31,8 @@ shared:
     - codegraph
   literal_env:
     ZOTERO_LIBRARY_ID: "^[0-9]+$"
+    OPENCODE_BROWSER_RUNTIME: "^auto-update$"
+    OPENCODE_BROWSER_ALLOW_FILE_URLS: "^1$"
 
 omo:
   instructions:
@@ -70,6 +72,7 @@ opencode:
     tracked: true
     env_ref: "{env:VAR}"
     servers_at: "mcp.servers"
+    enabled_servers: [browse, codegraph, exa, firecrawl, tavily, zenrows]
   skills:
     path: "~/.agents/skills"
     tracked: false

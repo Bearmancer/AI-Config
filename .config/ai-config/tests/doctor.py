@@ -54,8 +54,8 @@ SHAPES = {
         cmd="list",
         env="environment",
         off=("disabled", True),
-        type="local",
-        allowed={"type", "command", "environment", "disabled", "cwd", "pool", "codemode"},
+        type=None,
+        allowed={"type", "command", "environment", "disabled", "cwd", "pool", "codemode", "url", "headers", "oauth"},
     ),
     "kilo": dict(
         cmd="list",
@@ -233,9 +233,13 @@ def shape_problems(ctx: Ctx, harness: str, name: str, stanza: object) -> list[st
     allowed_set = set(allowed) if isinstance(allowed, (set, list, tuple)) else set()
     for extra in sorted(set(stanza) - allowed_set):
         out.append(f"{name}: key '{extra}' not allowed in the {harness} shape")
+    command = stanza.get("command")
     if shape["type"] and stanza.get("type") != shape["type"]:
         out.append(f"{name}: type must be '{shape['type']}'")
-    command = stanza.get("command")
+    if harness == "opencode" and stanza.get("type") == "remote":
+        if not isinstance(stanza.get("url"), str) or not stanza["url"].startswith("https://"):
+            out.append(f"{name}: remote stanza needs an https url")
+        return out
     if shape["cmd"] == "list":
         ok = (
             isinstance(command, list)
@@ -393,7 +397,7 @@ def check_mcp(ctx: Ctx, h: str) -> Cell:
     for name, stanza in servers.items():
         for reason in shape_problems(ctx, h, name, stanza):
             cell.add(DRIFT, reason)
-    wanted = set(ctx.reg["shared"]["enabled_servers"])
+    wanted = set(ctx.reg[h]["mcp"].get("enabled_servers") or ctx.reg["shared"]["enabled_servers"])
     enabled = {
         n for n, s in servers.items() if isinstance(s, dict) and is_enabled(h, s)
     }

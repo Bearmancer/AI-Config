@@ -80,8 +80,8 @@
         "mcp"
       ],
       "env": {
-        "OPENCODE_BROWSER_RUNTIME": "${OPENCODE_BROWSER_RUNTIME}",
-        "OPENCODE_BROWSER_ALLOW_FILE_URLS": "${OPENCODE_BROWSER_ALLOW_FILE_URLS}"
+        "OPENCODE_BROWSER_RUNTIME": "auto-update",
+        "OPENCODE_BROWSER_ALLOW_FILE_URLS": "1"
       },
       "enabled": false
     },

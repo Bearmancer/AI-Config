@@ -68,7 +68,7 @@ Never tracked: `~/.claude.json`, `~/.cline/data/**`, the Magic Context database,
 
 ### MCP servers
 
-Ten servers are defined in every harness: agentql, arxiv, codegraph, dappier, exa, firecrawl, paper-search, scrapegraph, tavily and zotero. A stanza has one shape everywhere: a bare command, its args, and an env block that holds only references to environment variables, never a value. OpenCode and Kilo spell the same thing as a command array plus `environment` and `type: local`. Only codegraph is enabled. The other nine stay defined but disabled: `enabled: false` in omo and Kilo, `disabled: true` in OpenCode and Cline. Claude Code has no per-server disable flag at user scope, so its file holds codegraph alone. The one literal allowed in a stanza is `ZOTERO_LIBRARY_ID`, a non-secret number.
+Twelve servers are defined in every harness: agentql, arxiv, browse, codegraph, dappier, exa, firecrawl, paper-search, scrapegraph, tavily, zenrows and zotero. A stanza has one shape everywhere: a bare command, its args, and an env block that holds only references to environment variables, never a value. OpenCode and Kilo spell the same thing as a command array plus `environment` and `type: local`. Codegraph is enabled everywhere; OpenCode also runs browse, exa, firecrawl, tavily and zenrows, the web lane this PC uses. The rest stay defined but disabled: `enabled: false` in omo and Kilo, `disabled: true` in OpenCode and Cline. Claude Code has no per-server disable flag at user scope, so its file holds codegraph alone. Two literals are allowed in a stanza: `ZOTERO_LIBRARY_ID`, a non-secret number, and the `OPENCODE_BROWSER_*` flags.
 
 ### Skills
 
