@@ -1,348 +1,109 @@
-import { readFileSync } from "node:fs";
-
-// Cline PreToolUse hook: same detectors and messages as the OpenCode plugins
-// forbidden-terminal-commands.ts and force-pathlib.ts.
-// Mechanism: Cline runs ~/.cline/hooks/PreToolUse.<ext> (here .ts, via `bun run`) with the
-// hook payload as JSON on stdin; stdout `{"cancel":true,"errorMessage":...}` blocks the tool call.
-// Source: @cline/core hook-file-config (event names, search paths), K3 (control output).
-
-function splitTopLevel(cmd: string): string[] {
-  const trimmed = cmd.trim();
-  if (!trimmed) return [];
-
-  const statements: string[] = [];
-  let current = "";
-  let inDouble = false;
-  let inSingle = false;
-
-  for (let i = 0; i < trimmed.length; i++) {
-    const ch = trimmed[i];
-    if (ch === "\"" && !inSingle) {
-      inDouble = !inDouble;
-      current += ch;
-    } else if (ch === "'" && !inDouble) {
-      inSingle = !inSingle;
-      current += ch;
-    } else if (
-      !inDouble
-      && !inSingle
-      && (ch === ";"
-        || ch === "\n"
-        || (ch === "&" && trimmed[i + 1] === "&")
-        || (ch === "|" && trimmed[i + 1] === "|"))
-    ) {
-      if (current.trim()) statements.push(current.trim());
-      current = "";
-      if (ch === "&" || ch === "|") i++;
-    } else if (!inDouble && !inSingle && ch === "|") {
-      if (current.trim()) statements.push(current.trim());
-      current = "";
-    } else {
-      current += ch;
-    }
-  }
-  if (current.trim()) statements.push(current.trim());
-
-  return statements;
+import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import forbiddenTerminalCommands from "./forbidden-terminal-commands";
+import pythonGuard from "./python-guard";
+import bannedPaths from "./banned-paths";
+type Hook = (e: { tool: string; input: unknown }) => void | Promise<void>;
+async function capture(plugin: any, label: string): Promise<Hook> {
+  const reg: { name: string; cb: Hook }[] = [];
+  if (typeof plugin?.setup !== "function") throw new Error(`${label} must export a setup function`);
+  await plugin.setup({ tool: { hook: async (name: string, cb: Hook) => { reg.push({ name, cb }); } } });
+  if (reg.length !== 1 || reg[0].name !== "execute.before") throw new Error(`${label} must register exactly one 'execute.before' hook`);
+  return reg[0].cb;
 }
-
-function splitStatements(cmd: string): string[] {
-  const out: string[] = [];
-  for (const stmt of splitTopLevel(cmd)) {
-    out.push(stmt);
-    // `bash -c "cmd /c x"` / `sh -c 'pwsh -Command x'`: inspect the wrapped command too.
-    const wrapped = stmt.match(
-      /^(?:\S*[\\\/])?(?:ba|da|z|k)?sh(?:\.exe)?\s+(?:-\S+\s+)*?-\w*c\w*\s+(?:"((?:[^"\\]|\\.)*)"|'([^']*)')\s*$/i,
-    );
-    if (wrapped) {
-      out.push(...splitStatements(wrapped[1] ?? wrapped[2] ?? ""));
-    }
-    const unquoted = stmt.match(/^(?:\S*[\\\/])?(?:ba|da|z|k)?sh(?:\.exe)?\s+(?:-\S+\s+)*?-\w*c\w*\s+(.+)$/i);
-    if (unquoted) out.push(...splitStatements(unquoted[1]));
-    for (const sub of stmt.matchAll(/\$\(([^()]*)\)/g)) out.push(...splitStatements(sub[1]));
-  }
-  return out;
+const terminalHook = await capture(forbiddenTerminalCommands, "forbidden-terminal-commands");
+const pythonHook = await capture(pythonGuard, "python-guard");
+async function capturePermission(plugin: any): Promise<(e: any) => void> {
+  let cb: any;
+  if (typeof plugin?.setup !== "function") throw new Error("banned-paths must export a setup function");
+  await plugin.setup({ location: { directory: process.cwd() }, tool: { hook: async () => {} }, permission: { hook: async (_n: string, h: (e: any) => void) => { cb = h; } } });
+  if (typeof cb !== "function") throw new Error("banned-paths must register a permission hook");
+  return cb;
 }
-
-function isForbiddenCmdInvocation(cmd: string): boolean {
-  if (typeof cmd !== "string") return false;
-
-  for (const stmt of splitStatements(cmd)) {
-    const s = stmt.trim();
-    if (!s) continue;
-
-    const exeMatch = s.match(
-      /^\s*(?:(?:call|start)\s+)?(?:"([^"\n]+)"|'([^'\n]+)'|([^\s"';&|`()]+))/i,
-    );
-    if (!exeMatch) continue;
-
-    const binary = (
-      exeMatch[1]
-      || exeMatch[2]
-      || exeMatch[3]
-      || ""
-    ).toLowerCase();
-    if (binary === "cmd" || binary === "cmd.exe") return true;
-    if (/[\\\/]cmd(?:\.exe)?$/.test(binary)) return true;
-  }
-
-  return false;
-}
-
-function isForbiddenPowerShellCommand(cmd: string): boolean {
-  if (typeof cmd !== "string") return false;
-
-  for (const stmt of splitStatements(cmd)) {
-    const s = stmt.trim();
-    if (!s) continue;
-
-    const cmdMatch = s.match(
-      /^(?:(?:&|start|exec)\s+|\bcmd(?:\.exe)?\s+\/[ck]\s+)?\s*(?:"([^"\n]+)"|'([^'\n]+)'|([^\s"';&|`()]+))/i,
-    );
-    if (!cmdMatch) continue;
-
-    const binary = (
-      cmdMatch[1]
-      || cmdMatch[2]
-      || cmdMatch[3]
-      || ""
-    ).toLowerCase();
-    if (!/^(?:.*[\\\/])?(?:powershell|pwsh)(?:\.exe)?$/.test(binary)) {
-      continue;
-    }
-
-    const flag = /(?:^|\s)-(?:c(?:ommand)?|e(?:nc(?:odedcommand)?)?)\b/i.exec(s);
-    const file = /(?:^|\s)-(?:f(?:ile)?)\s+(?:"[^"\n]+\.ps1"|'[^'\n]+\.ps1'|[^\s"';&|`()]+\.ps1)/i.exec(s);
-    if (flag && (!file || flag.index < file.index)) return true;
-
-    const hasFile = /(?:^|\s)-(?:f(?:ile)?)\s+(?:"[^"\n]+\.ps1"|'[^'\n]+\.ps1'|[^\s"';&|`()]+\.ps1)/i.test(
-      s,
-    );
-    if (hasFile) continue;
-
-    return true;
-  }
-
-  return false;
-}
-
-const CMD_POLICY_ERROR_MESSAGE = `[Policy Violation: forbidden-terminal-commands]
-cmd.exe is forbidden in agent shells. Write a .bat (or .py) file and run it once: './task.bat' or 'uv run ./task.py'.`;
-
-const POWERSHELL_POLICY_ERROR_MESSAGE = `[Policy Violation: forbidden-terminal-commands]
-Inline 'powershell'/'pwsh' (-Command/-EncodedCommand) is forbidden in agent shells. Write a .ps1 (or .py) file and run it once: './task.ps1' or 'uv run ./task.py'.`;
-
-/**
- * Validates Python scripts created or modified via write/edit tools.
- * Enforces:
- * 1. Must use `pathlib.Path` whenever performing path or file operations.
- * 2. Forbids bare `open(...)` calls without Path.
- * 3. Requires explicit UTF-8 encoding when reading/writing files.
- */
-// `existing` is the file's on-disk content for edit-type tools: the new fragment alone cannot show a pathlib import that is already there.
-function stripPythonCommentsAndStrings(source: string): string {
-  let out = "";
-  let quote = "";
-  for (let i = 0; i < source.length; i++) {
-    const ch = source[i];
-    if (quote) {
-      if (ch === "\\") {
-        i++;
-        continue;
-      }
-      if (ch === quote) quote = "";
-      continue;
-    }
-    if (ch === "#") {
-      while (i < source.length && source[i] !== "\n") i++;
-      out += "\n";
-      continue;
-    }
-    if (ch === '"' || ch === "'") {
-      quote = ch;
-      continue;
-    }
-    out += ch;
-  }
-  return out;
-}
-
-function inspectPythonPathlib(
-  path: string,
-  content: string,
-  existing = "",
-): void {
-  if (typeof path !== "string" || !path.endsWith(".py")) return;
-  if (typeof content !== "string" || !content.trim()) return;
-
-  // Check if content does file / path operations
-  const fileOpRegex =
-    /(?:\b(?:open\s*\(|os\.path\b|os\.listdir\b|os\.walk\b|os\.mkdir\b|os\.makedirs\b|os\.remove\b|os\.unlink\b|shutil\b))/;
-  const code = stripPythonCommentsAndStrings(content);
-  const hasFileOps = fileOpRegex.test(code);
-
-  // Check if pathlib / Path is imported
-  const importsPathlib = /(?:from\s+pathlib\s+import|\bimport\s+pathlib\b)/.test(
-    `${content}\n${existing}`,
-  );
-
-  // Check for bare open(...) call that doesn't go through Path
-  const hasBareOpen = /(?<!\.)\bopen\s*\(/.test(code);
-
-  if (hasFileOps && !importsPathlib) {
-    throw new Error(
-      `[Policy Violation: python-pathlib-guard]\n`
-        + `Python script '${path}' performs file/path operations but does not import 'pathlib'.\n`
-        + `Raw string path operations are forbidden due to Windows backslash parsing traps.\n\n`
-        + `Remediation:\n`
-        + `1. Import Path: from pathlib import Path\n`
-        + `2. Read files: Path(p).read_text(encoding="utf-8")\n`
-        + `3. Write files: Path(p).write_text(content, encoding="utf-8")\n`
-        + `4. Paths: Use Path(r'C:\\...') or forward slashes Path('C:/...')`,
-    );
-  }
-
-  if (hasBareOpen) {
-    throw new Error(
-      `[Policy Violation: python-pathlib-guard]\n`
-        + `Python script '${path}' uses bare 'open()'. Use 'pathlib.Path' methods with explicit UTF-8 encoding.\n`
-        + `Bare open() calls without explicit encoding suffer from Windows UTF-16LE / cp1252 corruption.\n\n`
-        + `Remediation:\n`
-        + `1. Read files: Path(p).read_text(encoding="utf-8")\n`
-        + `2. Write files: Path(p).write_text(content, encoding="utf-8")\n`
-        + `3. Or stream: Path(p).open("r", encoding="utf-8")`,
-    );
-  }
-}
-
-function readExisting(path: string): string {
+const bannedHook = await capturePermission(bannedPaths);
+const ps1 = /\.ps[dm]?1$/i;
+const checker = `${process.env.USERPROFILE}\\.agents\\scripts\\plugin-lint\\ps1-check.ps1`;
+const describe = (file: string, problems: string) =>
+  `ps1-lint: static analysis (parse, PSScriptAnalyzer, unresolved commands, unknown parameters, dead paths) found problems in ${file} (not saved). Fix them:\n${problems}`;
+function checkPs1(path: string, content: string): void {
+  if (!ps1.test(path) || !content.trim()) return;
+  const b = (globalThis as any).Bun;
+  if (!b?.spawnSync) return;
+  const dir = mkdtempSync(join(tmpdir(), "ps1-"));
   try {
-    return readFileSync(path, "utf8");
-  } catch {
-    return "";
+    const file = join(dir, "check.ps1");
+    writeFileSync(file, content, "utf8");
+    const r = b.spawnSync(["pwsh", "-NoProfile", "-NonInteractive", "-File", checker, file], { windowsHide: true });
+    const text = r.stdout ? r.stdout.toString().trim() : "";
+    if (text) throw new Error(describe(path, text));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 }
-
-export { inspectPythonPathlib, isForbiddenCmdInvocation, isForbiddenPowerShellCommand };
-
-function commandStrings(input: unknown): string[] {
-  if (typeof input === "string") return [input];
-  if (Array.isArray(input)) return input.flatMap(commandStrings);
-  if (!input || typeof input !== "object") return [];
-  const r = input as Record<string, unknown>;
-  if (r.commands !== undefined) return commandStrings(r.commands);
-  if (typeof r.command === "string") {
-    const args = Array.isArray(r.args)
-      ? r.args.filter((a): a is string => typeof a === "string")
-      : [];
-    return [[r.command, ...args].join(" ")];
-  }
-  if (typeof r.cmd === "string") return [r.cmd];
+function commandList(raw: unknown): unknown[] {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === "string") try { const p = JSON.parse(raw); if (Array.isArray(p)) return p; } catch {}
   return [];
 }
-
-// Throws the policy error for the first violation, mirroring the OpenCode plugins.
-export function inspectToolCall(name: string, input: unknown): void {
-  if (name === "run_commands") {
-    for (const cmd of commandStrings(input)) {
-      if (isForbiddenCmdInvocation(cmd)) {
-        throw new Error(CMD_POLICY_ERROR_MESSAGE);
-      }
-      if (isForbiddenPowerShellCommand(cmd)) {
-        throw new Error(POWERSHELL_POLICY_ERROR_MESSAGE);
-      }
-    }
-  } else if (name === "editor") {
-    const r = (input ?? {}) as Record<string, unknown>;
-    if (typeof r.path === "string" && typeof r.new_text === "string") {
-      // old_text / insert_line mean an edit of an existing file; otherwise the file is created or replaced.
-      const isEdit = r.old_text != null || r.insert_line != null;
-      inspectPythonPathlib(
-        r.path,
-        r.new_text,
-        isEdit ? readExisting(r.path) : "",
-      );
-    }
-  } else if (name === "apply_patch") {
-    const text = typeof input === "string"
-      ? input
-      : typeof (input as Record<string, unknown>)?.input === "string"
-      ? ((input as Record<string, unknown>).input as string)
-      : "";
-    let path = "";
-    let update = false;
-    let body: string[] = [];
-    const flush = () => {
-      if (path) {
-        inspectPythonPathlib(
-          path,
-          body.join("\n"),
-          update ? readExisting(path) : "",
-        );
-      }
-      path = "";
-      update = false;
-      body = [];
-    };
-    for (const line of text.split(/\r?\n/)) {
-      const head = line.match(/^\*\*\* (Add|Update) File: (.+)$/);
-      if (head || line.startsWith("*** ")) {
-        flush();
-        if (head) {
-          path = head[2].trim();
-          update = head[1] === "Update";
-        }
-      } else if (path && line.startsWith("+")) body.push(line.slice(1));
-    }
-    flush();
+function patchBlocks(body: string) {
+  const blocks: { add: boolean; path: string; lines: string[] }[] = [];
+  let cur: (typeof blocks)[number] | null = null;
+  for (const line of body.split("\n")) {
+    const h = line.match(/^\*\*\*\s+(Add|Update)\s+File:\s*(.+?)\s*$/);
+    if (h) { cur = { add: h[1].toLowerCase() === "add", path: h[2], lines: [] }; blocks.push(cur); continue; }
+    if (line.startsWith("*** ")) { cur = null; continue; }
+    if (cur && line.startsWith("+")) cur.lines.push(line.slice(1));
   }
+  return blocks;
 }
-
-function block(message: string): void {
-  process.stdout.write(
-    JSON.stringify({ cancel: true, errorMessage: message }),
-  );
-}
-
-// Cline sends both tool_call {name, input} and preToolUse {toolName, parameters} (parameters: string-valued map).
-// A payload that is not JSON never occurs in a real run, so it is blocked rather than waved through.
-async function main(): Promise<void> {
-  let payload: {
-    tool_call?: { name?: string; input?: unknown };
-    preToolUse?: {
-      toolName?: string;
-      parameters?: Record<string, unknown>;
-    };
-  };
-  try {
-    payload = JSON.parse(await Bun.stdin.text());
-  } catch {
-    block(
-      "[Policy Violation: guard-hook-payload] The PreToolUse hook payload is not valid JSON, so the tool call cannot be checked and was blocked.",
-    );
+export async function inspectToolCall(name: string, args: any): Promise<void> {
+  if (name === "read_file" || name === "read") {
+    const path = typeof args?.path === "string" ? args.path : typeof args?.filePath === "string" ? args.filePath : "";
+    if (path) {
+      const event: any = { action: "read", resources: [path] };
+      await bannedHook(event);
+      if (event.effect === "deny") throw new Error(event.message);
+    }
     return;
   }
-  const name = payload?.tool_call?.name ?? payload?.preToolUse?.toolName ?? "";
-  let input = payload?.tool_call?.input;
-  if (input === undefined && payload?.preToolUse?.parameters) {
-    input = Object.fromEntries(
-      Object.entries(payload.preToolUse.parameters).map(([k, v]) => {
-        if (typeof v !== "string" || !/^\s*[\[{]/.test(v)) {
-          return [k, v];
-        }
-        try {
-          return [k, JSON.parse(v)];
-        } catch {
-          return [k, v];
-        }
-      }),
-    );
+  if (name === "run_commands") {
+    for (const cmd of commandList(args?.commands)) {
+      if (typeof cmd !== "string") continue;
+      await terminalHook({ tool: "shell", input: { command: cmd } });
+      await pythonHook({ tool: "shell", input: { command: cmd } });
+    }
+    return;
   }
-  try {
-    inspectToolCall(name, input);
-  } catch (e) {
-    block((e as Error).message);
+  if (name === "editor") {
+    const path = typeof args?.path === "string" ? args.path : "";
+    const text = typeof args?.new_text === "string" ? args.new_text : "";
+    const edit = args?.old_text !== undefined && args?.old_text !== null;
+    await pythonHook({ tool: edit ? "edit" : "write", input: { path, filePath: path, ...(edit ? { newString: text } : { content: text }) } });
+    if (!edit) checkPs1(path, text);
+    return;
+  }
+  if (name === "apply_patch") {
+    for (const b of patchBlocks(typeof args?.input === "string" ? args.input : "")) {
+      const content = b.lines.join("\n");
+      await pythonHook({ tool: b.add ? "write" : "edit", input: { path: b.path, filePath: b.path, ...(b.add ? { content } : { newString: content }) } });
+      if (b.add) checkPs1(b.path, content);
+    }
   }
 }
-
-if (import.meta.main) await main();
+function readStdin(): string {
+  try { const b = (globalThis as any).Bun; if (b?.stdin?.textSync) return String(b.stdin.textSync() ?? ""); } catch {}
+  try { return readFileSync(0, "utf8"); } catch { return ""; }
+}
+if ((import.meta as any).main) {
+  const raw = readStdin();
+  if (raw.trim()) {
+    let payload: any;
+    try { payload = JSON.parse(raw); } catch { console.log(JSON.stringify({ cancel: true, errorMessage: "Hook input is not valid JSON." })); }
+    if (payload) {
+      const call = payload.preToolUse ? { name: payload.preToolUse.toolName, args: payload.preToolUse.parameters ?? {} } : payload.tool_call ? { name: payload.tool_call.name, args: payload.tool_call.input ?? {} } : null;
+      if (call) try { await inspectToolCall(typeof call.name === "string" ? call.name : "", call.args); } catch (e) { console.log(JSON.stringify({ cancel: true, errorMessage: e instanceof Error ? e.message : String(e) })); }
+    }
+  }
+  process.exitCode = 0;
+}

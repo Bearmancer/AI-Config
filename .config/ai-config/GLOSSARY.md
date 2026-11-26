@@ -61,7 +61,7 @@ _Avoid_: Installer, sync
 ## Doctor and the hook
 
 **Doctor**:
-`scripts/doctor.py`. It reads the registry and the live files, prints the matrix and writes nothing.
+`tests/doctor.py`. It reads the registry and the live files, prints the matrix and writes nothing.
 _Avoid_: Status, checker
 
 **Registry**:
@@ -96,10 +96,6 @@ _Avoid_: Secret gate, lint
 A config whose tool loads no `.jsonc` of that stem, so it keeps its `.json` name. Its entry in the registry carries a probed reason. Every other JSON config is `.jsonc`.
 _Avoid_: Exception file
 
-**Twin**:
-The `.json` file beside a `.jsonc` of the same stem, or a skills copy beside `~/.agents/skills`. Doctor reports a twin as drift.
-_Avoid_: Duplicate, backup
-
 ## OpenCode files
 
 **Runtime config**:
@@ -129,11 +125,11 @@ A pointer to an environment variable inside a stanza, in the harness's own synta
 _Avoid_: Placeholder, token
 
 **Disabled server**:
-A server defined in a harness's MCP file but switched off by that harness's flag. Only codegraph is enabled everywhere; Claude Code, which has no per-server flag at user scope, holds codegraph alone.
+A server defined in a harness's MCP file but switched off by that harness's flag. Codegraph is enabled everywhere; OpenCode additionally runs the web lane (browse, exa, firecrawl, tavily, zenrows), and Command Code enables its own research and web lanes plus linear. Claude Code, which has no per-server flag at user scope, holds codegraph alone.
 _Avoid_: Removed server
 
 **Secrets cell**:
-Doctor's check that every env reference a harness's stanzas use resolves to a set per-PC user environment variable. It reads names only.
+Doctor's literal-secret scan over each harness's tracked config files. It reports names and line numbers only, never values.
 _Avoid_: Vault check
 
 ## Skills

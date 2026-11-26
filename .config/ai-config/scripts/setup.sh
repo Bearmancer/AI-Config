@@ -126,7 +126,10 @@ if missing:
     print(f"warning: no bws secret found for: {', '.join(missing)}", file=sys.stderr)
 
 
-# 5. MCP entries for the apps whose files are not tracked.
+# 5. Command Code memory bridge: imports OMO standing rules; never a copy.
+uv run --no-project python "$config_dir/scripts/commandcode_memory.py" --write
+
+# 6. MCP entries for the apps whose files are not tracked.
 def entry(server, template, typed):
     command = server["command"]
     out = {"type": "stdio"} if typed else {}
@@ -195,9 +198,6 @@ if [ ! -e "$HOME/.omo/agent/AGENTS.md" ]; then
     mkdir -p "$HOME/.omo/agent"
     ln "$HOME/.agents/AGENTS.md" "$HOME/.omo/agent/AGENTS.md"
 fi
-
-# 5. Command Code memory bridge: imports OMO standing rules; never a copy.
-uv run --no-project python "$config_dir/scripts/commandcode_memory.py" --write
 
 [ "$rc" -eq 0 ] || exit "$rc"
 echo "setup complete. Log out and in (or restart apps) to pick up the new environment variables."

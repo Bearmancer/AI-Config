@@ -11,7 +11,6 @@ NEW_FILES = [
     ".config/ai-config/docs/adr/0022-yaml-registry.md",
     ".config/ai-config/tests/test_docs_registry.py",
     ".config/ai-config/tests/test_entrypoints.py",
-    ".config/ai-config/tests/test_registry_cli.py",
     ".config/ai-config/tests/test_registry_cutover.py",
     ".config/ai-config/tests/test_registry_schema.py",
     ".config/ai-config/tests/test_yaml_config.py",

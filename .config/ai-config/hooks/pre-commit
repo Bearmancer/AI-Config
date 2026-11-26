@@ -8,12 +8,7 @@ echo "pre-commit: redaction scan of staged files" >&2
 uv run --no-project python "$cfg/scripts/scan_staged.py" || exit 1
 
 echo "pre-commit: ai-config doctor" >&2
-uv run --project "$cfg" python "$cfg/scripts/doctor.py" || exit 1
+uv run --project "$cfg" python "$cfg/tests/doctor.py" || exit 1
 
 echo "pre-commit: test suite" >&2
-# Fail-safe skip: run the suite unless every staged path is one no test reads.
-if git diff --cached --name-only | grep -qvE '^(skills-lock\.json|\.omo/|\.claude/|\.commandcode/|\.agents/AGENTS\.md)'; then
-  uv run --project "$cfg" pytest -q -p no:cacheprovider "$cfg/tests" || exit 1
-else
-  echo "pre-commit: test suite skipped (every staged path is one no test reads)" >&2
-fi
+uv run --project "$cfg" pytest -q -p no:cacheprovider "$cfg/tests" || exit 1
