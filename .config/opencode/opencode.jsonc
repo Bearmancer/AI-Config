@@ -18,7 +18,7 @@
 			"browse": {
 				"type": "local",
 				"command": [
-					"browse",
+					"C:\\Users\\Lance\\.local\\bin\\browse.exe",
 					"mcp"
 				],
 				"cwd": "C:\\Users\\Lance",
@@ -67,9 +67,60 @@
 				},
 				"disabled": false
 			},
+			"scrapegraph": {
+				"type": "remote",
+				"url": "https://mcp.scrapegraphai.com/mcp",
+				"oauth": false,
+				"headers": {
+					"X-API-Key": "{env:SGAI_API_KEY}"
+				}
+			},
+			"tinyfish": {
+				"type": "remote",
+				"url": "https://agent.tinyfish.ai/mcp",
+				"oauth": false,
+				"headers": {
+					"Authorization": "Bearer {env:TINYFISH_API_KEY}"
+				}
+			},
+			"apify": {
+				"type": "remote",
+				"url": "https://mcp.apify.com?tools=actors,apify/rag-web-browser",
+				"oauth": false,
+				"headers": {
+					"Authorization": "Bearer {env:APIFY_TOKEN}"
+				}
+			},
+			"microsoft-learn": {
+				"type": "remote",
+				"url": "https://learn.microsoft.com/api/mcp"
+			},
+			"brightdata": {
+				"type": "local",
+				"command": [
+					"npx",
+					"-y",
+					"@brightdata/mcp"
+				],
+				"environment": {
+					"API_TOKEN": "{env:BRIGHTDATA_API_KEY}"
+				}
+			},
+			"fetch": {
+				"type": "local",
+				"command": [
+					"uvx",
+					"mcp-server-fetch"
+				],
+				"environment": {
+					"PYTHONIOENCODING": "utf-8"
+				}
+			},
 			"agentql": {
 				"type": "local",
-				"command": ["agentql-mcp"],
+				"command": [
+					"agentql-mcp"
+				],
 				"environment": {
 					"AGENTQL_API_KEY": "{env:AGENTQL_API_KEY}"
 				},
@@ -77,12 +128,16 @@
 			},
 			"arxiv": {
 				"type": "local",
-				"command": ["arxiv-mcp-server"],
+				"command": [
+					"arxiv-mcp-server"
+				],
 				"disabled": true
 			},
 			"dappier": {
 				"type": "local",
-				"command": ["dappier-mcp"],
+				"command": [
+					"dappier-mcp"
+				],
 				"environment": {
 					"DAPPIER_API_KEY": "{env:DAPPIER_API_KEY}"
 				},
@@ -90,20 +145,16 @@
 			},
 			"paper-search": {
 				"type": "local",
-				"command": ["paper-search-mcp"],
-				"disabled": true
-			},
-			"scrapegraph": {
-				"type": "local",
-				"command": ["scrapegraph-mcp"],
-				"environment": {
-					"SGAI_API_KEY": "{env:SGAI_API_KEY}"
-				},
+				"command": [
+					"paper-search-mcp"
+				],
 				"disabled": true
 			},
 			"zotero": {
 				"type": "local",
-				"command": ["zotero-mcp"],
+				"command": [
+					"zotero-mcp"
+				],
 				"environment": {
 					"ZOTERO_API_KEY": "{env:ZOTERO_API_KEY}",
 					"ZOTERO_LIBRARY_ID": "22374787"
@@ -117,6 +168,21 @@
 			"action": "skill",
 			"resource": "firecrawl*",
 			"effect": "deny"
+		},
+		{
+			"action": "tinyfish_*",
+			"resource": "*",
+			"effect": "deny"
+		},
+		{
+			"action": "tinyfish_search",
+			"resource": "*",
+			"effect": "allow"
+		},
+		{
+			"action": "tinyfish_fetch_content",
+			"resource": "*",
+			"effect": "allow"
 		}
 	],
 	"plugins": [
@@ -125,7 +191,7 @@
 		"@slkiser/opencode-quota"
 	],
 	"compaction": {
-		"auto": false,
+		"auto": false
 	},
 	"providers": {
 		"alibaba-token-plan": {
@@ -177,9 +243,6 @@
 				},
 				"MiniMax-M2.5": {
 					"disabled": true
-				},
-				"qwen3.8-max": {
-					"disabled": true
 				}
 			}
 		},
@@ -228,8 +291,20 @@
 		}
 	},
 	"policies": [
-		{ "action": "provider.use", "resource": "*", "effect": "deny" },
-		{ "action": "provider.use", "resource": "alibaba-token-plan", "effect": "allow" },
-		{ "action": "provider.use", "resource": "claude-agent", "effect": "allow" }
+		{
+			"action": "provider.use",
+			"resource": "*",
+			"effect": "deny"
+		},
+		{
+			"action": "provider.use",
+			"resource": "alibaba-token-plan",
+			"effect": "allow"
+		},
+		{
+			"action": "provider.use",
+			"resource": "claude-agent",
+			"effect": "allow"
+		}
 	]
 }

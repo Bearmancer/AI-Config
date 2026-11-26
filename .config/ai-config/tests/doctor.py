@@ -153,14 +153,17 @@ def check_mcp(ctx: Ctx, h: str) -> Cell:
     if servers is None:
         cell.add(DRIFT, f"no server table at '{spec.get('servers_at')}' in {spec['path']}")
         return cell
+    canonical = set(ctx.reg["shared"].get("canonical_servers") or ())
+    names = set(servers)
+    if canonical and not canonical <= names and h != "claude":
+        cell.add(DRIFT, f"missing canonical servers: {sorted(canonical - names)}")
     if h in PARITY_HARNESSES:
         ref_obj, _ = ctx.read_json(ctx.reg["opencode"]["mcp"])
         ref = servers_of(ctx, "opencode", ref_obj) if ref_obj is not None else None
         if ref is None:
             cell.add(UNKNOWN, "OpenCode's server set (the reference) is unreadable")
-        elif set(servers) != set(ref):
-            diff = sorted(set(servers) ^ set(ref))
-            cell.add(DRIFT, f"server names differ from OpenCode's: {diff}")
+        elif not names <= set(ref):
+            cell.add(DRIFT, f"servers beyond OpenCode's set: {sorted(names - set(ref))}")
     return cell
 
 
