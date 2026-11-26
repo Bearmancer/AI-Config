@@ -105,6 +105,30 @@
           "ZOTERO_API_KEY": "{env:ZOTERO_API_KEY}",
           "ZOTERO_LIBRARY_ID": "22374787"
         }
+      },
+      "browse": {
+        "type": "local",
+        "command": [
+          "browse",
+          "mcp"
+        ],
+        "environment": {
+          "OPENCODE_BROWSER_RUNTIME": "{env:OPENCODE_BROWSER_RUNTIME}",
+          "OPENCODE_BROWSER_ALLOW_FILE_URLS": "{env:OPENCODE_BROWSER_ALLOW_FILE_URLS}"
+        },
+        "enabled": false
+      },
+      "zenrows": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@zenrows/mcp"
+        ],
+        "environment": {
+          "ZENROWS_API_KEY": "{env:ZENROWS_API_KEY}"
+        },
+        "enabled": false
       }
     }
   },

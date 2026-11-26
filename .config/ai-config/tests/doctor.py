@@ -55,7 +55,7 @@ SHAPES = {
         env="environment",
         off=("disabled", True),
         type="local",
-        allowed={"type", "command", "environment", "disabled"},
+        allowed={"type", "command", "environment", "disabled", "cwd", "pool", "codemode"},
     ),
     "kilo": dict(
         cmd="list",

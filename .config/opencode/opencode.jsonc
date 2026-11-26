@@ -1,5 +1,8 @@
 {
 	"$schema": "https://opencode.ai/config.json",
+	"instructions": [
+		"~/.agents/AGENTS.md"
+	],
 	"mcp": {
 		"servers": {
 			"codegraph": {
@@ -15,7 +18,7 @@
 			"browse": {
 				"type": "local",
 				"command": [
-					"C:\\Users\\Lance\\.local\\bin\\browse.exe",
+					"browse",
 					"mcp"
 				],
 				"cwd": "C:\\Users\\Lance",
@@ -63,6 +66,49 @@
 					"ZENROWS_API_KEY": "{env:ZENROWS_API_KEY}"
 				},
 				"disabled": false
+			},
+			"agentql": {
+				"type": "local",
+				"command": ["agentql-mcp"],
+				"environment": {
+					"AGENTQL_API_KEY": "{env:AGENTQL_API_KEY}"
+				},
+				"disabled": true
+			},
+			"arxiv": {
+				"type": "local",
+				"command": ["arxiv-mcp-server"],
+				"disabled": true
+			},
+			"dappier": {
+				"type": "local",
+				"command": ["dappier-mcp"],
+				"environment": {
+					"DAPPIER_API_KEY": "{env:DAPPIER_API_KEY}"
+				},
+				"disabled": true
+			},
+			"paper-search": {
+				"type": "local",
+				"command": ["paper-search-mcp"],
+				"disabled": true
+			},
+			"scrapegraph": {
+				"type": "local",
+				"command": ["scrapegraph-mcp"],
+				"environment": {
+					"SGAI_API_KEY": "{env:SGAI_API_KEY}"
+				},
+				"disabled": true
+			},
+			"zotero": {
+				"type": "local",
+				"command": ["zotero-mcp"],
+				"environment": {
+					"ZOTERO_API_KEY": "{env:ZOTERO_API_KEY}",
+					"ZOTERO_LIBRARY_ID": "22374787"
+				},
+				"disabled": true
 			}
 		}
 	},
