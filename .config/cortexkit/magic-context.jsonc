@@ -2,14 +2,13 @@
   "$schema": "https://raw.githubusercontent.com/cortexkit/magic-context/master/assets/magic-context.schema.json",
   // Give Magic Context sessions launched from the home directory their own memory.
   "allow_home_project": true,
-  // Historian model chain: free Zen -> free Go -> CommandCode DeepSeek -> Qwen Flash. No paid OpenCode Go
+  // Historian model chain: free Zen -> free Go -> Qwen Flash. No paid OpenCode Go
   // rung; the free Go rung stays.
   "historian": {
     "opencode": {
       "model": "opencode/beam-free",
       "fallback_models": [
         "opencode-go/beam-free",
-        "commandcode/deepseek/deepseek-v4.1-flash",
         "alibaba-token-plan/qwen3.8-flash"
       ]
     }

@@ -108,11 +108,6 @@ def world(tmp_path):
             ):
                 write(home, spec["path"], "{}")
     write(home, ".omo/omo.jsonc", json.dumps({"memory": {"agent": "global-1"}, "disabled_skills": []}))
-    for rel in doctor.commandcode_memory.SOURCES:
-        write(home, f".omo/memory/agents/global-1-abcd/repo/{rel}", f"# {rel}\n")
-    write(home, ".commandcode/AGENTS.md", "@~/.agents/AGENTS.md\n@~/.commandcode/omo-memory.md\n")
-    write(home, ".commandcode/settings.json", json.dumps({"disabledSkills": []}))
-    doctor.commandcode_memory.write(home)
     return home, reg
 
 
@@ -306,49 +301,7 @@ def test_harness_list_derives_from_registry(world):
         "kilo",
         "cline",
         "claude",
-        "commandcode",
     ]
-
-
-def test_commandcode_instructions_must_be_import_lines(world):
-    home, reg = world
-    write(home, ".commandcode/AGENTS.md", "# copied rules\n")
-    by, _ = states(home, reg)
-    assert by["commandcode", "instructions"].state == doctor.DRIFT
-
-
-def test_commandcode_disabled_set_must_cover_omo(world):
-    home, reg = world
-    write(
-        home,
-        ".omo/omo.jsonc",
-        json.dumps({"memory": {"agent": "global-1"}, "disabled_skills": ["alpha"]}),
-    )
-    by, _ = states(home, reg)
-    assert by["commandcode", "skills"].state == doctor.DRIFT
-    assert any("alpha" in r for r in by["commandcode", "skills"].reasons)
-    write(home, ".commandcode/settings.json", json.dumps({"disabledSkills": ["alpha"]}))
-    by, _ = states(home, reg)
-    assert by["commandcode", "skills"].state == doctor.OK
-
-
-def test_commandcode_enables_only_codegraph(world):
-    home, reg = world
-    path = home / ".commandcode/mcp.json"
-    doc = json.loads(path.read_text(encoding="utf-8"))
-    del doc["mcpServers"]["exa"]["enabled"]
-    path.write_text(json.dumps(doc, indent=1), encoding="utf-8")
-    by, _ = states(home, reg)
-    assert by["commandcode", "mcp"].state == doctor.DRIFT
-    assert any("exa" in r for r in by["commandcode", "mcp"].reasons)
-
-
-def test_commandcode_memory_bridge_stale_is_drift(world):
-    home, reg = world
-    path = home / ".commandcode/omo-memory.md"
-    path.write_text(path.read_text(encoding="utf-8") + "@extra\n", encoding="utf-8")
-    by, _ = states(home, reg)
-    assert by["commandcode", "instructions"].state == doctor.DRIFT
 
 
 def test_jsonc_dialects():

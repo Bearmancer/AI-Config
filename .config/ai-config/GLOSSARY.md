@@ -9,7 +9,7 @@ AI-Config keeps omo, OpenCode, Kilo, Cline and Claude Code configured from one g
 ## Harnesses
 
 **Harness**:
-One of the six tools ai-config keeps in line: omo, opencode (OpenCode with Slim), kilo (the Kilo CLI, an OpenCode fork), cline (the Cline CLI), claude (Claude Code) and commandcode (Command Code).
+One of the five tools ai-config keeps in line: omo, opencode (OpenCode with Slim), kilo (the Kilo CLI, an OpenCode fork), cline (the Cline CLI) and claude (Claude Code).
 _Avoid_: Consumer, plugin, tool
 
 **Harness table**:

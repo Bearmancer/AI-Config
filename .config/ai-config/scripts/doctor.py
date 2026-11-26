@@ -29,7 +29,6 @@ if str(CONFIG_DIR) not in sys.path:
 from lib import jsonc  # noqa: E402
 from lib.redaction import scan_text  # noqa: E402
 from lib.yaml_config import load_registry  # noqa: E402
-from scripts import commandcode_memory  # noqa: E402
 
 SURFACES = ("instructions", "mcp", "skills", "config", "secrets")
 
@@ -79,13 +78,6 @@ SHAPES = {
         type="stdio",
         allowed={"type", "command", "args", "env"},
     ),
-    "commandcode": dict(
-        cmd="str",
-        env="env",
-        off=("enabled", False),
-        type=None,
-        allowed={"transport", "command", "args", "env", "enabled"},
-    ),
 }
 def _key(path: str) -> str:
     return path.casefold() if os.name == "nt" else path
@@ -100,7 +92,6 @@ SECOND_INSTRUCTIONS = {
     "kilo": (".config/kilo/AGENTS.md",),
     "cline": (".cline/AGENTS.md",),
     "claude": (".claude/AGENTS.md",),
-    "commandcode": (".commandcode/.commandcode/AGENTS.md",),
 }
 HOME_INSTRUCTIONS = "AGENTS.md"
 # Skills folders other than ~/.agents/skills where a copy would be a twin.
@@ -109,7 +100,6 @@ SKILL_TWIN_ROOTS = {
     "opencode": (".config/opencode/skills",),
     "kilo": (".config/kilo/skills",),
     "cline": (".cline/skills",),
-    "commandcode": (".commandcode/skills",),
 }
 FIXED_TRACKED = (".gitignore", "skills-lock.json", ".claude/CLAUDE.md")
 FIXED_TRACKED_PREFIXES = (".config/ai-config/", ".github/")
@@ -377,17 +367,6 @@ def check_instructions(ctx: Ctx, h: str) -> Cell:
                 DRIFT,
                 f"~/{IMPORT_LINE_FILE} is not the single import line @{spec['path']}",
             )
-    if h == "commandcode" and path.is_file():
-        expected = ["@~/.agents/AGENTS.md", "@~/.commandcode/omo-memory.md"]
-        lines = [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
-        if lines != expected:
-            cell.add(
-                DRIFT,
-                f"{spec['path']} must hold exactly {expected}, not a copy",
-            )
-        elif not ctx.repo_only:
-            for problem in commandcode_memory.check_problems(ctx.home):
-                cell.add(DRIFT, problem)
     return cell
 
 
@@ -501,40 +480,7 @@ def check_skills(ctx: Ctx, h: str) -> Cell:
             )
     if h == "omo":
         _omo_skill_filter(ctx, cell, present)
-    if h == "commandcode":
-        _commandcode_disabled(ctx, cell)
     return cell
-
-
-def _commandcode_disabled(ctx: Ctx, cell: Cell) -> None:
-    settings = next(
-        (s for s in ctx.reg["commandcode"]["files"] if s["path"].endswith("settings.json")),
-        None,
-    )
-    if settings is None:
-        cell.add(DRIFT, "harnesses.yaml [commandcode] files lacks settings.json")
-        return
-    doc, problems = ctx.read_json(settings)
-    for state, reason in problems:
-        cell.add(state, reason)
-    if doc is None:
-        return
-    disabled = set(doc.get("disabledSkills") or ())
-    try:
-        omo_cfg = jsonc.parse(
-            (ctx.home / ".omo/omo.jsonc").read_text(encoding="utf-8"), strict=False
-        )
-        if not isinstance(omo_cfg, dict):
-            raise TypeError("omo.jsonc must be a mapping")
-    except (OSError, jsonc.JsonError, TypeError, AttributeError) as exc:
-        cell.add(DRIFT, f"commandcode disabled-set source unreadable: {exc}")
-        return
-    missing = sorted(set(omo_cfg.get("disabled_skills") or ()) - disabled)
-    if missing:
-        cell.add(
-            DRIFT,
-            f"OMO-disabled skills missing from commandcode disabledSkills: {', '.join(missing)}",
-        )
 
 
 def _omo_skill_filter(ctx: Ctx, cell: Cell, present: set) -> None:
