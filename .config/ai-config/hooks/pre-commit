@@ -8,7 +8,7 @@ echo "pre-commit: redaction scan of staged files" >&2
 uv run --no-project python "$cfg/scripts/scan_staged.py" || exit 1
 
 echo "pre-commit: ai-config doctor" >&2
-uv run --project "$cfg" python "$cfg/scripts/doctor.py" || exit 1
+uv run --project "$cfg" python "$cfg/tests/doctor.py" || exit 1
 
 echo "pre-commit: test suite" >&2
 # Fail-safe skip: run the suite unless every staged path is one no test reads.

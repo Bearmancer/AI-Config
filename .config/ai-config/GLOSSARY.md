@@ -61,7 +61,7 @@ _Avoid_: Installer, sync
 ## Doctor and the hook
 
 **Doctor**:
-`scripts/doctor.py`. It reads the registry and the live files, prints the matrix and writes nothing.
+`tests/doctor.py`. It reads the registry and the live files, prints the matrix and writes nothing.
 _Avoid_: Status, checker
 
 **Registry**:

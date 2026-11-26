@@ -1,197 +1,159 @@
 {
 	"$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-	"compactSidebar": true,
-	"autoUpdate": true,
-	"image_routing": "direct",
-	"deepworkGuardMode": "enforce",
-	"preset": "free",
+	"preset": "lineup",
 	"presets": {
-		"free": {
+		"lineup": {
 			"orchestrator": {
 				"model": [
-					"opencode/glm-5.3-flash-free",
-					"opencode-go/beam-free"
+					{
+						"id": "alibaba-token-plan/qwen3.8-flash",
+						"variant": "xhigh"
+					},
+					{
+						"id": "claude-agent/sonnet"
+					}
 				],
 				"skills": [
+					"*"
+				],
+				"mcps": [
 					"*"
 				]
 			},
 			"oracle": {
 				"model": [
-					"opencode/glm-5.3-flash-free",
-					"opencode-go/beam-free"
+					{
+						"id": "alibaba-token-plan/qwen4-max",
+						"variant": "xhigh"
+					},
+					{
+						"id": "claude-agent/sonnet",
+						"variant": "high"
+					}
 				],
 				"skills": [
-					"simplify"
-				]
-			},
-			"designer": {
-				"model": [
-					"opencode/deepseek-v4.1-flash-free",
-					"opencode-go/beam-free"
+					"simplify",
+					"requesting-code-review"
 				],
-				"skills": []
-			},
-			"explorer": {
-				"model": [
-					"opencode/mimo-v2.6-flash-free",
-					"opencode-go/beam-free"
-				],
-				"skills": []
-			},
-			"fixer": {
-				"model": [
-					"opencode/mimo-v2.6-flash-free",
-					"opencode-go/beam-free"
-				],
-				"skills": []
-			},
-			"observer": {
-				"model": [
-					"opencode/mimo-v2.6-flash-free",
-					"opencode-go/beam-free"
-				],
-				"skills": []
-			},
-			"default": {
-				"model": [
-					"opencode/glm-5.3-flash-free",
-					"opencode-go/beam-free"
-				],
-				"skills": []
-			}
-		},
-		// Anthropic: Anthropic models alone (claude-agent aliases resolve to Claude 5.5). Sonnet for judgment seats with haiku as the family-native fallback; haiku alone for the fast seats.
-		"anthropic": {
-			"orchestrator": {
-				"model": [
-					"claude-agent/sonnet",
-					"claude-agent/haiku"
-				],
-				"skills": [
+				"mcps": [
 					"*"
 				]
 			},
-			"oracle": {
-				"model": [
-					"claude-agent/sonnet",
-					"claude-agent/haiku"
-				],
-				"skills": [
-					"simplify"
-				]
-			},
-			"designer": {
-				"model": [
-					"claude-agent/sonnet",
-					"claude-agent/haiku"
-				],
-				"skills": []
-			},
 			"explorer": {
 				"model": [
-					"claude-agent/haiku"
+					{
+						"id": "alibaba-token-plan/qwen3.8-flash",
+						"variant": "low"
+					},
+					{
+						"id": "claude-agent/haiku",
+						"variant": "low"
+					}
 				],
-				"skills": []
-			},
-			"fixer": {
-				"model": [
-					"claude-agent/haiku"
-				],
-				"skills": []
-			},
-			"observer": {
-				"model": [
-					"claude-agent/haiku"
-				],
-				"skills": []
-			}
-		},
-		// Paid: free-first insurance restored per owner (opencode, then opencode-go free), Alibaba qwen3.8-flash as final fallback.
-		"paid": {
-			"orchestrator": {
-				"model": [
-					"opencode/glm-5.3-flash-free",
-					"opencode-go/beam-free",
-					"alibaba-token-plan/qwen3.8-flash"
-				],
-				"skills": [
+				"skills": [],
+				"mcps": [
 					"*"
 				]
 			},
-			"oracle": {
-				"model": [
-					"opencode/glm-5.3-flash-free",
-					"opencode-go/beam-free",
-					"alibaba-token-plan/qwen3.8-flash"
-				],
-				"skills": [
-					"simplify"
-				]
-			},
 			"designer": {
 				"model": [
-					"opencode/deepseek-v4.1-flash-free",
-					"opencode-go/beam-free",
-					"alibaba-token-plan/qwen3.8-flash"
+					{
+						"id": "alibaba-token-plan/qwen3.8-flash",
+						"variant": "medium"
+					},
+					{
+						"id": "claude-agent/sonnet",
+						"variant": "medium"
+					}
 				],
-				"skills": []
-			},
-			"explorer": {
-				"model": [
-					"opencode/beam-free",
-					"opencode-go/beam-free",
-					"alibaba-token-plan/qwen3.8-flash"
-				],
-				"skills": []
+				"skills": [],
+				"mcps": [
+					"*"
+				]
 			},
 			"fixer": {
 				"model": [
-					"opencode/beam-free",
-					"opencode-go/beam-free",
-					"alibaba-token-plan/qwen3.8-flash"
+					{
+						"id": "alibaba-token-plan/qwen3.8-flash",
+						"variant": "low"
+					},
+					{
+						"id": "claude-agent/haiku",
+						"variant": "low"
+					}
 				],
-				"skills": []
+				"skills": [],
+				"mcps": [
+					"*"
+				]
 			},
 			"observer": {
 				"model": [
-					"opencode/beam-free",
-					"alibaba-token-plan/qwen3.8-flash"
+					{
+						"id": "alibaba-token-plan/qwen3.8-flash",
+						"variant": "medium"
+					},
+					{
+						"id": "claude-agent/haiku",
+						"variant": "medium"
+					}
 				],
-				"skills": []
+				"skills": [],
+				"mcps": []
 			}
 		}
 	},
-	"default": {
-		"default_preset": "paid-council",
+	"disabled_agents": [],
+	"disabled_mcps": [],
+	"disabled_tools": [],
+	"disabled_skills": [],
+	"disabled_hooks": [],
+	"disabled_commands": [],
+	"image_routing": "auto",
+	"tui": true,
+	"sidebar": true,
+	"compactSidebar": true,
+	"liveConfigRefresh": true,
+	"autoUpdate": true,
+	"marketplace": {
+		"enabled": true
+	},
+	"fallback": {
+		"enabled": true,
+		"maxRetries": 3,
+		"retryDelayMs": 500
+	},
+	"interview": {
+		"enabled": true,
+		"maxQuestions": 10,
+		"dashboard": true,
+		"autoOpenBrowser": true
+	},
+	"multiplexer": {
+		"type": "auto",
+		"layout": "main-vertical",
+		"main_pane_size": 60
+	},
+	"council": {
+		"default_preset": "default",
 		"presets": {
-			"paid-council": {
+			"default": {
 				"alpha": {
-					"model": ["opencode/glm-5.3-flash-free", "opencode-go/beam-free", "alibaba-token-plan/qwen3.8-flash"],
-					"variant": "high",
-					"prompt": "You are Councillor Alpha, specialized in Code Quality, Implementation Cleanliness, and Syntax Standards. You evaluate code clarity, maintainability, type correctness, edge cases, and unit test coverage."
+					"model": "alibaba-token-plan/qwen3.8-flash",
+					"variant": "medium"
 				},
 				"beta": {
-					"model": ["opencode/glm-5.3-flash-free", "opencode-go/beam-free", "alibaba-token-plan/qwen3.8-flash"],
-					"variant": "high",
-					"prompt": "You are Councillor Beta, specialized in System Architecture, Interface Contracts, Modularity, and State Management. You evaluate architectural seams, coupling, data flow, failure modes, and migration safety."
+					"model": "alibaba-token-plan/qwen3.8-flash",
+					"variant": "xhigh"
 				},
 				"gamma": {
-					"model": ["opencode/glm-5.3-flash-free", "opencode-go/beam-free", "alibaba-token-plan/qwen3.8-flash"],
-					"variant": "high",
-					"prompt": "You are Councillor Gamma, specialized in Security, Hardening, and Threat Modeling. You evaluate auth boundaries, input validation, secret hygiene, dependency risks, and permission enforcement."
-				},
-				"delta": {
-					"model": ["opencode/glm-5.3-flash-free", "opencode-go/beam-free", "alibaba-token-plan/qwen3.8-flash"],
-					"variant": "high",
-					"prompt": "You are Councillor Delta, specialized in Performance, Efficiency, and Scalability. You evaluate memory usage, I/O bottlenecks, concurrency, latency, resource leaks, and caching strategies."
-				},
-				"epsilon": {
-					"model": ["opencode/glm-5.3-flash-free", "opencode-go/beam-free", "alibaba-token-plan/qwen3.8-flash"],
-					"variant": "high",
-					"prompt": "You are Councillor Epsilon, specialized in Integration, Data Correctness, and Reliability. You evaluate API contracts, serialization boundaries, error handling, data migrations, idempotency, and cross-service failure paths, and you reconcile engineering proposals into clear action items."
+					"model": "alibaba-token-plan/qwen3.8-flash",
+					"variant": "medium"
 				}
 			}
 		}
+	},
+	"companion": {
+		"enabled": false
 	}
 }

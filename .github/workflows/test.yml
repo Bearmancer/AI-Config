@@ -20,14 +20,17 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
+      - name: Link the omo global instruction file
+        run: mkdir -p "$HOME/.omo/agent" && ln "$HOME/.agents/AGENTS.md" "$HOME/.omo/agent/AGENTS.md"
+
       - name: Sync project environment
         run: uv sync --project .config/ai-config
 
       - name: Test suite, doctor drift check and lint (concurrent)
         run: |
           uv run --project .config/ai-config pytest -q .config/ai-config/tests & tests=$!
-          uv run --project .config/ai-config python .config/ai-config/scripts/doctor.py --repo-only --home "$GITHUB_WORKSPACE" & doctor=$!
-          uv run --project .config/ai-config ty check .config/ai-config/lib .config/ai-config/scripts & lint=$!
+          uv run --project .config/ai-config python .config/ai-config/tests/doctor.py --repo-only --home "$GITHUB_WORKSPACE" & doctor=$!
+          uv run --project .config/ai-config ty check .config/ai-config/lib .config/ai-config/scripts .config/ai-config/tests/doctor.py & lint=$!
           status=0
           wait $tests || status=1
           wait $doctor || status=1

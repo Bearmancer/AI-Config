@@ -1,156 +1,54 @@
-/**
- * OpenCode server plugin (2.x plugin shape).
- *
- * Enforces the owner rule (2026-11-05): all Python work on this box goes
- * through uv ONLY — `uv run`, `uvx` / `uv tool run`, `uv tool install`.
- *
- * Forbidden:
- *  - `py`, `python`, `python3`, `pip`, `pip3` invoked directly (bare python
- *    was already `uv run` per AGENTS.md; now refusal is enforced)
- *  - any venv, created any way: `python -m venv`, `uv venv`, `virtualenv`
- *  - interpreters inside a venv (`...\Scripts\python.exe`, `.../bin/python`)
- *
- * Allowed: anything whose executable is `uv`/`uvx` except `uv venv` —
- * `uv run python script.py` and `uvx yt-dlp ...` stay legal.
- *
- * Same shape as forbidden-terminal-commands.ts: default export
- * `{ id, setup }`, hook via `ctx.tool.hook("execute.before")`, throw to
- * refuse — the thrown message is the tool error the model reads.
- */
-
-function splitTopLevel(cmd: string): string[] {
-  const trimmed = cmd.trim();
-  if (!trimmed) return [];
-
-  const statements: string[] = [];
-  let current = "";
-  let inDouble = false;
-  let inSingle = false;
-
-  for (let i = 0; i < trimmed.length; i++) {
-    const ch = trimmed[i];
-    if (ch === "\"" && !inSingle) {
-      inDouble = !inDouble;
-      current += ch;
-    } else if (ch === "'" && !inDouble) {
-      inSingle = !inSingle;
-      current += ch;
-    } else if (
-      !inDouble
-      && !inSingle
-      && (ch === ";"
-        || ch === "\n"
-        || (ch === "&" && trimmed[i + 1] === "&")
-        || (ch === "|" && trimmed[i + 1] === "|"))
-    ) {
-      if (current.trim()) statements.push(current.trim());
-      current = "";
-      if (ch === "&" || ch === "|") i++;
-    } else if (!inDouble && !inSingle && ch === "|") {
-      if (current.trim()) statements.push(current.trim());
-      current = "";
-    } else {
-      current += ch;
-    }
+function split(cmd: string): string[] {
+  cmd = cmd.trim();
+  const top: string[] = [];
+  let cur = "", dq = false, sq = false;
+  const push = () => { if (cur.trim()) top.push(cur.trim()); cur = ""; };
+  for (let i = 0; i < cmd.length; i++) {
+    const ch = cmd[i];
+    if (ch === '"' && !sq) dq = !dq;
+    else if (ch === "'" && !dq) sq = !sq;
+    else if (!dq && !sq && (ch === ";" || ch === "\n" || (ch === "&" && cmd[i + 1] === "&") || (ch === "|" && cmd[i + 1] === "|"))) { push(); if (ch === "&" || ch === "|") i++; continue; }
+    else if (!dq && !sq && ch === "|") { push(); continue; }
+    cur += ch;
   }
-  if (current.trim()) statements.push(current.trim());
-
-  return statements;
-}
-
-function splitStatements(cmd: string): string[] {
+  push();
   const out: string[] = [];
-  for (const stmt of splitTopLevel(cmd)) {
-    out.push(stmt);
-    // `bash -c "python x"` / `sh -c 'uv venv'`: inspect the wrapped command too.
-    const wrapped = stmt.match(
-      /^(?:\S*[\\\/])?(?:ba|da|z|k)?sh(?:\.exe)?\s+(?:-\S+\s+)*?-\w*c\w*\s+(?:"((?:[^"\\]|\\.)*)"|'([^']*)')\s*$/i,
-    );
-    if (wrapped) out.push(...splitStatements(wrapped[1] ?? wrapped[2] ?? ""));
+  for (const s of top) {
+    out.push(s);
+    const w = s.match(/^(?:\S*[\\\/])?(?:ba|da|z|k)?sh(?:\.exe)?\s+(?:-\S+\s+)*?-\w*c\w*\s+(?:"((?:[^"\\]|\\.)*)"|'([^']*)')\s*$/i);
+    if (w) out.push(...split(w[1] ?? w[2] ?? ""));
   }
   return out;
 }
-
-function firstToken(stmt: string): { binary: string; rest: string } | null {
+const INTERPRETER = /^(?:.*[\\\/])?(?:python[\d._]*|pypy[\d._]*|py)(?:\.exe)?$/;
+const PIP = /^(?:.*[\\\/])?(?:pip[\d._]*|pipx)(?:\.exe)?$/;
+function violation(stmt: string): string | null {
   const m = stmt.match(/^\s*(?:(?:call|start|exec|&)\s+)?(?:"([^"\n]+)"|'([^'\n]+)'|([^\s"';&|`()]+))\s*(.*)$/i);
   if (!m) return null;
-  return {
-    binary: (m[1] || m[2] || m[3] || "").toLowerCase(),
-    rest: (m[4] || "").trim(),
-  };
-}
-
-const INTERPRETER_RE = /^(?:.*[\\\/])?(?:python[\d._]*|pypy[\d._]*|py)(?:\.exe)?$/;
-const PIP_RE = /^(?:.*[\\\/])?(?:pip[\d._]*|pipx)(?:\.exe)?$/;
-
-function violation(stmt: string): string | null {
-  const tok = firstToken(stmt);
-  if (!tok) return null;
-  const { binary, rest } = tok;
-
-  // venv paths: an interpreter resolved inside a venv is still python.
-  if (INTERPRETER_RE.test(binary)) {
-    if (binary === "py" || binary === "py.exe") {
-      return "`py` launcher is forbidden. Use uv: 'uv run ./script.py', 'uvx <tool>'.";
-    }
-    return `Direct '${binary}' is forbidden. Use uv only: 'uv run ./script.py', 'uvx <tool>', or 'uv tool run <tool>'.`;
-  }
-  if (PIP_RE.test(binary)) {
-    return `Direct '${binary}' is forbidden. Use uv: 'uv pip ...' inside 'uv run', or 'uv tool install <pkg>'.`;
-  }
-  // python -m venv is caught above; block venv makers themselves.
-  if (/^(?:.*[\\\/])?virtualenv(?:\.exe)?$/.test(binary)) {
-    return "`virtualenv` is forbidden. No venvs on this box — use 'uv run' / 'uvx' / 'uv tool'.";
-  }
-  if (binary === "uv" || binary === "uv.exe" || binary === "uvx" || binary === "uvx.exe") {
-    const sub = rest.split(/\s+/)[0] ?? "";
-    if (sub === "venv" || sub === "virtualenv") {
-      return "`uv venv` is forbidden. No venvs — run tools via 'uvx' and scripts via 'uv run'.";
-    }
-  }
+  const b = (m[1] || m[2] || m[3] || "").toLowerCase();
+  const rest = (m[4] || "").trim();
+  if (INTERPRETER.test(b)) return b === "py" || b === "py.exe" ? "`py` launcher is forbidden. Use uv: 'uv run ./script.py', 'uvx <tool>'." : `Direct '${b}' is forbidden. Use uv only: 'uv run ./script.py', 'uvx <tool>', or 'uv tool run <tool>'.`;
+  if (PIP.test(b)) return `Direct '${b}' is forbidden. Use uv: 'uv pip ...' inside 'uv run', or 'uv tool install <pkg>'.`;
+  if (/^(?:.*[\\\/])?virtualenv(?:\.exe)?$/.test(b)) return "`virtualenv` is forbidden. No venvs on this box — use 'uv run' / 'uvx' / 'uv tool'.";
+  if ((b === "uv" || b === "uv.exe" || b === "uvx" || b === "uvx.exe") && (rest.split(/\s+/)[0] ?? "") === "venv") return "`uv venv` is forbidden. No venvs — run tools via 'uvx' and scripts via 'uv run'.";
+  if ((b === "uv" || b === "uv.exe" || b === "uvx" || b === "uvx.exe") && (rest.split(/\s+/)[0] ?? "") === "virtualenv") return "`uv venv` is forbidden. No venvs — run tools via 'uvx' and scripts via 'uv run'.";
   return null;
 }
-
-const PREAMBLE = "[Policy Violation: uv-only-python]";
-
-function inspectCommand(input: unknown): void {
+function inspect(input: unknown): void {
   if (!input || typeof input !== "object") return;
-  const record = input as Record<string, unknown>;
-  const cmd = typeof record.command === "string"
-    ? record.command
-    : typeof record.cmd === "string"
-    ? record.cmd
-    : "";
+  const r = input as Record<string, unknown>;
+  const cmd = typeof r.command === "string" ? r.command : typeof r.cmd === "string" ? r.cmd : "";
   if (!cmd) return;
-
-  for (const stmt of splitStatements(cmd)) {
-    const reason = stmt.trim() ? violation(stmt.trim()) : null;
-    if (reason) throw new Error(`${PREAMBLE}\n${reason}`);
+  for (const s of split(cmd)) {
+    const why = s.trim() ? violation(s.trim()) : null;
+    if (why) throw new Error(`[Policy Violation: uv-only-python]\n${why}`);
   }
 }
-
-interface ToolExecuteBeforeEvent {
-  tool: string;
-  input: unknown;
+async function setup(ctx: any) {
+  if (typeof ctx?.tool?.hook !== "function") return;
+  await ctx.tool.hook("execute.before", (e: any) => { if (e?.tool === "shell") inspect(e.input); });
 }
-
-interface ToolDomainLike {
-  hook: (
-    name: string,
-    callback: (event: ToolExecuteBeforeEvent) => void | Promise<void>,
-  ) => Promise<unknown>;
+async function server() {
+  return { "tool.execute.before": async (i: any, c: any) => { if (i?.tool === "bash") inspect(c?.args); } };
 }
-
-interface PluginContextLike {
-  tool?: ToolDomainLike;
-}
-
-async function setup(ctx: PluginContextLike): Promise<void> {
-  if (!ctx?.tool || typeof ctx.tool.hook !== "function") return;
-  await ctx.tool.hook("execute.before", (event) => {
-    if (!event || event.tool !== "shell") return;
-    inspectCommand(event.input);
-  });
-}
-
-export default { id: "uv-only-python", setup };
+export default { id: "uv-only-python", setup, server };

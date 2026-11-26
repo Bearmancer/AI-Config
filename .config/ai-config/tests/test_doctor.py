@@ -16,7 +16,7 @@ import pytest
 
 from lib import jsonc
 from lib.yaml_config import load_registry
-from scripts import doctor
+from tests import doctor
 
 CONFIG_DIR = Path(doctor.__file__).resolve().parent.parent
 REAL_GITIGNORE = CONFIG_DIR.parents[1] / ".gitignore"

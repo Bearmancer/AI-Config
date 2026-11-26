@@ -2,15 +2,20 @@
   "$schema": "https://raw.githubusercontent.com/cortexkit/magic-context/master/assets/magic-context.schema.json",
   // Give Magic Context sessions launched from the home directory their own memory.
   "allow_home_project": true,
-  // Historian model chain: free Zen -> free Go -> Qwen Flash. No paid OpenCode Go
-  // rung; the free Go rung stays.
+  // Compact when context usage reaches 40% (plugin minimum is 35; below it the plugin disables itself).
+  "execute_threshold_percentage": 40,
+  // Historian model chain: Qwen 3.8 Flash -> Claude Haiku.
   "historian": {
     "opencode": {
-      "model": "opencode/beam-free",
+      "model": "alibaba-token-plan/qwen3.8-flash",
       "fallback_models": [
-        "opencode-go/beam-free",
-        "alibaba-token-plan/qwen3.8-flash"
+        "claude-agent/haiku"
       ]
+    }
+  },
+  "dreamer": {
+    "opencode": {
+      "model": "alibaba-token-plan/qwen3.8-flash"
     }
   }
 }

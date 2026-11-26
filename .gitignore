@@ -5,6 +5,11 @@
 !/.agents/
 /.agents/*
 !/.agents/AGENTS.md
+!/.agents/scripts/
+/.agents/scripts/*
+!/.agents/scripts/plugin-lint/
+/.agents/scripts/plugin-lint/*
+!/.agents/scripts/plugin-lint/ps1-check.ps1
 
 !/.github/
 /.github/*
@@ -52,13 +57,22 @@
 !/.config/kilo/kilo.jsonc
 !/.config/kilo/plugin/
 /.config/kilo/plugin/*
+!/.config/kilo/plugin/banned-paths.ts
 !/.config/kilo/plugin/forbidden-terminal-commands.ts
 !/.config/kilo/plugin/force-pathlib.ts
+!/.config/kilo/plugin/ps1-lint.ts
+!/.config/kilo/plugin/python-cli-utf8.ts
+!/.config/kilo/plugin/ssh-paramiko-only.ts
+!/.config/kilo/plugin/uv-only-python.ts
+!/.config/kilo/plugin/uv-run-script.ts
 !/.config/cortexkit/
 /.config/cortexkit/*
 !/.config/cortexkit/magic-context.jsonc
 !/.config/opencode/
 /.config/opencode/*
+!/.config/opencode/commands/
+/.config/opencode/commands/*
+!/.config/opencode/commands/just-ask-me.md
 !/.config/opencode/opencode.jsonc
 !/.config/opencode/tui-preferences.jsonc
 !/.config/opencode/cli.json
@@ -68,13 +82,18 @@
 !/.config/opencode/oh-my-opencode-slim/orchestrator_append.md
 !/.config/opencode/plugins/
 /.config/opencode/plugins/*
+!/.config/opencode/plugins/banned-paths.ts
 !/.config/opencode/plugins/forbidden-terminal-commands.ts
 !/.config/opencode/plugins/force-pathlib.ts
-!/.config/opencode/plugins/ps1-lint-guard.ts
+!/.config/opencode/plugins/no-restart.ts
+!/.config/opencode/plugins/ps1-lint.ts
+!/.config/opencode/plugins/python-cli-utf8.ts
+!/.config/opencode/plugins/question-gate.ts
+!/.config/opencode/plugins/ssh-paramiko-only.ts
+!/.config/opencode/plugins/uv-only-python.ts
+!/.config/opencode/plugins/uv-run-script.ts
 !/.config/opencode/service/
 !/.config/opencode/service/opencode-service-runner.ps1
-!/.config/opencode/plugins/python-cli-utf8.ts
-!/.config/opencode/plugins/uv-only-python.ts
 .slim/deepwork/
 
 # Noise: never track caches

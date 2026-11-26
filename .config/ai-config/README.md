@@ -22,11 +22,12 @@ Only files named in `~/.gitignore` are visible to git. Its first rule is `/*`, s
 ## Doctor
 
 `ai-config doctor` is `scripts/doctor.py`. It reads `harnesses.yaml` and the live files and prints one row per harness per surface: five harnesses (omo, opencode, kilo, cline, claude) by five surfaces (instructions, mcp, skills, config, secrets). Each cell is OK, DRIFT, MISSING, NA or UNKNOWN. It exits 0 only when every cell is OK or NA, and an absent file is never OK. A cell is NA only with a reason read from the harness's own source. Doctor never writes and never prints a secret value.
+`ai-config doctor` is `tests/doctor.py`. It reads `harnesses.yaml` and the live files and prints one row per harness per surface: five harnesses (omo, opencode, kilo, cline, claude) by five surfaces (instructions, mcp, skills, config, secrets). Each cell is OK, DRIFT, MISSING, NA or UNKNOWN. It exits 0 only when every cell is OK or NA, and an absent file is never OK. A cell is NA only with a reason read from the harness's own source. Doctor never writes and never prints a secret value.
 
 ```
-uv run --project ~/.config/ai-config python ~/.config/ai-config/scripts/doctor.py
-uv run --project ~/.config/ai-config python ~/.config/ai-config/scripts/doctor.py --repo-only
-uv run --project ~/.config/ai-config python ~/.config/ai-config/scripts/doctor.py --json
+uv run --project ~/.config/ai-config python ~/.config/ai-config/tests/doctor.py
+uv run --project ~/.config/ai-config python ~/.config/ai-config/tests/doctor.py --repo-only
+uv run --project ~/.config/ai-config python ~/.config/ai-config/tests/doctor.py --json
 ```
 
 `--repo-only` skips the cells that need a PC's untracked, app-owned files, so CI can run it on a bare checkout.
