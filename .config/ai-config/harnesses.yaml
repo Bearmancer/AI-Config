@@ -85,15 +85,29 @@ opencode:
     - path: "~/.config/opencode/oh-my-opencode-slim/orchestrator_append.md"
       tracked: true
       optional: true
+    - path: "~/.config/opencode/plugins/banned-paths.ts"
+      tracked: true
     - path: "~/.config/opencode/plugins/forbidden-terminal-commands.ts"
       tracked: true
     - path: "~/.config/opencode/plugins/force-pathlib.ts"
       tracked: true
-    - path: "~/.config/opencode/plugins/ps1-lint-guard.ts"
+    - path: "~/.config/opencode/plugins/no-restart.ts"
+      tracked: true
+    - path: "~/.config/opencode/plugins/ps1-lint.ts"
       tracked: true
     - path: "~/.config/opencode/plugins/python-cli-utf8.ts"
       tracked: true
+    - path: "~/.config/opencode/plugins/question-gate.ts"
+      tracked: true
+    - path: "~/.config/opencode/plugins/ssh-paramiko-only.ts"
+      tracked: true
     - path: "~/.config/opencode/plugins/uv-only-python.ts"
+      tracked: true
+    - path: "~/.config/opencode/plugins/uv-run-script.ts"
+      tracked: true
+    - path: "~/.config/opencode/commands/just-ask-me.md"
+      tracked: true
+    - path: "~/.agents/scripts/plugin-lint/ps1-check.ps1"
       tracked: true
     - path: "~/.config/opencode/service/opencode-service-runner.ps1"
       tracked: true
@@ -117,9 +131,21 @@ kilo:
   files:
     - path: "~/.config/kilo/kilo.jsonc"
       tracked: true
+    - path: "~/.config/kilo/plugin/banned-paths.ts"
+      tracked: true
     - path: "~/.config/kilo/plugin/forbidden-terminal-commands.ts"
       tracked: true
     - path: "~/.config/kilo/plugin/force-pathlib.ts"
+      tracked: true
+    - path: "~/.config/kilo/plugin/ps1-lint.ts"
+      tracked: true
+    - path: "~/.config/kilo/plugin/python-cli-utf8.ts"
+      tracked: true
+    - path: "~/.config/kilo/plugin/ssh-paramiko-only.ts"
+      tracked: true
+    - path: "~/.config/kilo/plugin/uv-only-python.ts"
+      tracked: true
+    - path: "~/.config/kilo/plugin/uv-run-script.ts"
       tracked: true
 
 cline:
@@ -149,6 +175,22 @@ cline:
       tracked: true
       optional: true
     - path: "~/.cline/hooks/PreToolUse.ts"
+      tracked: true
+    - path: "~/.cline/hooks/banned-paths.ts"
+      tracked: true
+    - path: "~/.cline/hooks/forbidden-terminal-commands.ts"
+      tracked: true
+    - path: "~/.cline/hooks/force-pathlib.ts"
+      tracked: true
+    - path: "~/.cline/hooks/ps1-lint.ts"
+      tracked: true
+    - path: "~/.cline/hooks/python-cli-utf8.ts"
+      tracked: true
+    - path: "~/.cline/hooks/ssh-paramiko-only.ts"
+      tracked: true
+    - path: "~/.cline/hooks/uv-only-python.ts"
+      tracked: true
+    - path: "~/.cline/hooks/uv-run-script.ts"
       tracked: true
     - path: "~/.cline/skills"
       tracked: true

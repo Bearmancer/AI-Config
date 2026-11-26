@@ -1,127 +1,28 @@
 import { readFileSync } from "node:fs";
-
-/**
- * Validates Python scripts created or modified via write/edit tools.
- * Enforces:
- * 1. Must use `pathlib.Path` whenever performing path or file operations.
- * 2. Forbids bare `open(...)` calls without Path.
- * 3. Requires explicit UTF-8 encoding when reading/writing files.
- */
-// `existing` is the file's on-disk content for edit-type tools: the new fragment alone cannot show a pathlib import that is already there.
-function stripPythonCommentsAndStrings(source: string): string {
-  let out = "";
-  let quote = "";
-  for (let i = 0; i < source.length; i++) {
-    const ch = source[i];
-    if (quote) {
-      if (ch === "\\") {
-        i++;
-        continue;
-      }
-      if (ch === quote) quote = "";
-      continue;
-    }
-    if (ch === "#") {
-      while (i < source.length && source[i] !== "\n") i++;
-      out += "\n";
-      continue;
-    }
-    if (ch === '"' || ch === "'") {
-      quote = ch;
-      continue;
-    }
-    out += ch;
-  }
-  return out;
-}
-
-function inspectPythonPathlib(path: string, content: string, existing = ""): void {
+const OPS = /(?:\b(?:open\s*\(|os\.path\b|os\.listdir\b|os\.walk\b|os\.mkdir\b|os\.makedirs\b|os\.remove\b|os\.unlink\b|shutil\b))/;
+const HAS_PATHLIB = /(?:from\s+pathlib\s+import|\bimport\s+pathlib\b)/;
+const BARE_OPEN = /(?<!\.)\bopen\s*\(/;
+function check(path: string, content: string, existing = ""): void {
   if (typeof path !== "string" || !path.endsWith(".py")) return;
   if (typeof content !== "string" || !content.trim()) return;
-
-  // Check if content does file / path operations
-  const fileOpRegex =
-    /(?:\b(?:open\s*\(|os\.path\b|os\.listdir\b|os\.walk\b|os\.mkdir\b|os\.makedirs\b|os\.remove\b|os\.unlink\b|shutil\b))/;
-  const code = stripPythonCommentsAndStrings(content);
-  const hasFileOps = fileOpRegex.test(code);
-
-  // Check if pathlib / Path is imported
-  const importsPathlib = /(?:from\s+pathlib\s+import|\bimport\s+pathlib\b)/.test(`${content}\n${existing}`);
-
-  // Check for bare open(...) call that doesn't go through Path
-  const hasBareOpen = /(?<!\.)\bopen\s*\(/.test(code);
-
-  if (hasFileOps && !importsPathlib) {
-    throw new Error(
-      `[Policy Violation: python-pathlib-guard]\n`
-        + `Python script '${path}' performs file/path operations but does not import 'pathlib'.\n`
-        + `Raw string path operations are forbidden due to Windows backslash parsing traps.\n\n`
-        + `Remediation:\n`
-        + `1. Import Path: from pathlib import Path\n`
-        + `2. Read files: Path(p).read_text(encoding="utf-8")\n`
-        + `3. Write files: Path(p).write_text(content, encoding="utf-8")\n`
-        + `4. Paths: Use Path(r'C:\\...') or forward slashes Path('C:/...')`,
-    );
-  }
-
-  if (hasBareOpen) {
-    throw new Error(
-      `[Policy Violation: python-pathlib-guard]\n`
-        + `Python script '${path}' uses bare 'open()'. Use 'pathlib.Path' methods with explicit UTF-8 encoding.\n`
-        + `Bare open() calls without explicit encoding suffer from Windows UTF-16LE / cp1252 corruption.\n\n`
-        + `Remediation:\n`
-        + `1. Read files: Path(p).read_text(encoding="utf-8")\n`
-        + `2. Write files: Path(p).write_text(content, encoding="utf-8")\n`
-        + `3. Or stream: Path(p).open("r", encoding="utf-8")`,
-    );
-  }
+  if (OPS.test(content) && !HAS_PATHLIB.test(`${content}\n${existing}`)) throw new Error(`[Policy Violation: python-pathlib-guard]\nPython script '${path}' performs file/path operations but does not import 'pathlib'.\nRaw string path operations are forbidden due to Windows backslash parsing traps.\n\nRemediation:\n1. Import Path: from pathlib import Path\n2. Read files: Path(p).read_text(encoding="utf-8")\n3. Write files: Path(p).write_text(content, encoding="utf-8")\n4. Paths: Use Path(r'C:\\...') or forward slashes Path('C:/...')`);
+  if (BARE_OPEN.test(content)) throw new Error(`[Policy Violation: python-pathlib-guard]\nPython script '${path}' uses bare 'open()'. Use 'pathlib.Path' methods with explicit UTF-8 encoding.\nBare open() calls without explicit encoding suffer from Windows UTF-16LE / cp1252 corruption.\n\nRemediation:\n1. Import Path: from pathlib import Path\n2. Read files: Path(p).read_text(encoding="utf-8")\n3. Or stream: Path(p).open("r", encoding="utf-8")`);
 }
-
-function readExisting(path: string): string {
-  try {
-    return readFileSync(path, "utf8");
-  } catch {
-    return "";
-  }
-}
-
-function inspectToolInput(tool: string, input: unknown): void {
+function inspect(tool: string, input: unknown): void {
   if (!input || typeof input !== "object") return;
-  const record = input as Record<string, unknown>;
-
-  // Kilo's write/edit tools name the path `filePath`; `path` is accepted too.
-  const filePath = typeof record.filePath === "string"
-    ? record.filePath
-    : typeof record.path === "string"
-    ? record.path
-    : "";
-  if (!filePath.endsWith(".py")) return;
-
-  const content = tool === "write"
-    ? typeof record.content === "string"
-      ? record.content
-      : ""
-    : tool === "edit"
-    ? typeof record.newString === "string"
-      ? record.newString
-      : ""
-    : "";
-
-  inspectPythonPathlib(filePath, content, tool === "edit" ? readExisting(filePath) : "");
+  const r = input as Record<string, unknown>;
+  const p = typeof r.filePath === "string" ? r.filePath : typeof r.path === "string" ? r.path : "";
+  if (!p.endsWith(".py")) return;
+  const content = tool === "write" ? (typeof r.content === "string" ? r.content : "") : tool === "edit" ? (typeof r.newString === "string" ? r.newString : "") : "";
+  let existing = "";
+  if (tool === "edit") try { existing = readFileSync(p, "utf8"); } catch {}
+  check(p, content, existing);
 }
-
-// Kilo plugin API: https://kilo.ai/docs/automate/extending/plugins ("tool.execute.before", default export { id, server }).
-export default {
-  id: "force-pathlib",
-  async server() {
-    return {
-      "tool.execute.before": async (
-        input: { tool: string },
-        output: { args?: Record<string, unknown> },
-      ) => {
-        if (input.tool !== "write" && input.tool !== "edit") return;
-        inspectToolInput(input.tool, output?.args);
-      },
-    };
-  },
-};
+async function setup(ctx: any) {
+  if (typeof ctx?.tool?.hook !== "function") return;
+  await ctx.tool.hook("execute.before", (e: any) => { if (e?.tool === "write" || e?.tool === "edit") inspect(e.tool, e.input); });
+}
+async function server() {
+  return { "tool.execute.before": async (i: any, c: any) => { if (i?.tool === "write" || i?.tool === "edit") inspect(i.tool, c?.args); } };
+}
+export default { id: "force-pathlib", setup, server };
