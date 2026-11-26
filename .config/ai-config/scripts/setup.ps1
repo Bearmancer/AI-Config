@@ -208,7 +208,7 @@ Invoke-Native 'omo instruction hard link' {
 }
 
 # 5. Command Code memory bridge: imports OMO standing rules; never a copy.
-Invoke-Native 'commandcode memory bridge' { uv run --no-project python (Join-Path $ConfigDir 'scripts/commandcode_memory.py') --write }
+Invoke-Native 'commandcode memory bridge' { uv run (Join-Path $ConfigDir 'scripts/commandcode_memory.py') --write }
 
 # 6. MCP entries for the apps whose files are not tracked.
 $enabled = @(uv run --project $ConfigDir python (Join-Path $ConfigDir 'scripts/registry_cli.py') enabled-servers $HarnessesYaml)

@@ -127,7 +127,7 @@ if missing:
 
 
 # 5. Command Code memory bridge: imports OMO standing rules; never a copy.
-uv run --no-project python "$config_dir/scripts/commandcode_memory.py" --write
+uv run "$config_dir/scripts/commandcode_memory.py" --write
 
 # 6. MCP entries for the apps whose files are not tracked.
 def entry(server, template, typed):
@@ -176,7 +176,7 @@ PY
 	export GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=core.autocrlf GIT_CONFIG_VALUE_0=false GIT_CONFIG_KEY_1=core.eol GIT_CONFIG_VALUE_1=lf
 	npx --yes skills experimental_install
 	mapfile -t pairs < <(
-		uv run --no-project python - <<'PY'
+		uv run - <<'PY'
 import json
 from pathlib import Path
 
