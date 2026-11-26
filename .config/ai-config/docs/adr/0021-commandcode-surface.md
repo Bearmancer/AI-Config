@@ -1,7 +1,5 @@
 # Command Code is a first-class harness; its OMO bridge is generated, never copied
 
-Status: Superseded — CommandCode removed 2026-11-26 (the owner uninstalled CommandCode); the text below is historical.
-
 Context: Command Code (`cmdc`) reads skills from `~/.agents/skills`, MCP servers from `~/.commandcode/mcp.json`, and user memory from `~/.commandcode/AGENTS.md`. It also learns a taste profile of its own. The repo managed five harnesses and left Command Code unmanaged, so its instruction file was a drifting copy and its MCP set was empty.
 
 Decision:

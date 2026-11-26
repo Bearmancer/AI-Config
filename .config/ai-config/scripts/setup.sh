@@ -11,7 +11,9 @@
 #      universal agents (.agents/skills), so it then runs
 #      npx skills add <source> -s <name> -a claude-code -y for each lock skill
 #      (one name per call; multi-name -s fails on some sources) to fill ~/.claude/skills.
-#   5. Write the OpenCode MCP server set into the app-owned Cline and Claude files:
+#   5. Generate ~/.commandcode/omo-memory.md, the import-only bridge to OMO
+#      standing memory.
+#   6. Write the OpenCode MCP server set into the app-owned Cline and Claude files:
 #      Cline holds every server with all but the harnesses.yaml shared enabled_servers
 #      set to disabled; Claude holds only the enabled servers.
 #
@@ -124,7 +126,10 @@ if missing:
     print(f"warning: no bws secret found for: {', '.join(missing)}", file=sys.stderr)
 
 
-# 5. MCP entries for the apps whose files are not tracked.
+# 5. Command Code memory bridge: imports OMO standing rules; never a copy.
+uv run --no-project python "$config_dir/scripts/commandcode_memory.py" --write
+
+# 6. MCP entries for the apps whose files are not tracked.
 def entry(server, template, typed):
     command = server["command"]
     out = {"type": "stdio"} if typed else {}

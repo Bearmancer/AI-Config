@@ -1,0 +1,117 @@
+{
+  "mcpServers": {
+    "agentql": {
+      "transport": "stdio",
+      "enabled": false,
+      "command": "agentql-mcp",
+      "env": {
+        "AGENTQL_API_KEY": "${AGENTQL_API_KEY}"
+      }
+    },
+    "arxiv": {
+      "transport": "stdio",
+      "enabled": true,
+      "command": "arxiv-mcp-server"
+    },
+    "browse": {
+      "transport": "stdio",
+      "enabled": true,
+      "command": "C:\\Users\\Lance\\.local\\bin\\browse.exe",
+      "args": [
+        "mcp"
+      ],
+      "env": {
+        "OPENCODE_BROWSER_RUNTIME": "auto-update",
+        "OPENCODE_BROWSER_ALLOW_FILE_URLS": "1"
+      }
+    },
+    "codegraph": {
+      "transport": "stdio",
+      "enabled": true,
+      "command": "codegraph",
+      "args": [
+        "serve",
+        "--mcp"
+      ],
+      "env": {
+        "CODEGRAPH_NO_WATCHDOG": "1",
+        "CODEGRAPH_NO_RELAUNCH": "1"
+      }
+    },
+    "dappier": {
+      "transport": "stdio",
+      "enabled": false,
+      "command": "dappier-mcp",
+      "env": {
+        "DAPPIER_API_KEY": "${DAPPIER_API_KEY}"
+      }
+    },
+    "exa": {
+      "transport": "stdio",
+      "enabled": true,
+      "command": "exa-mcp-server",
+      "env": {
+        "EXA_API_KEY": "${EXA_API_KEY}"
+      }
+    },
+    "firecrawl": {
+      "transport": "stdio",
+      "enabled": false,
+      "command": "firecrawl-mcp",
+      "env": {
+        "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
+      }
+    },
+    "linear": {
+      "transport": "stdio",
+      "enabled": true,
+      "command": "C:\\Users\\Lance\\.bun\\bin\\bunx.exe",
+      "args": [
+        "mcp-remote",
+        "https://mcp.linear.app/mcp"
+      ]
+    },
+    "paper-search": {
+      "transport": "stdio",
+      "enabled": true,
+      "command": "paper-search-mcp"
+    },
+    "scrapegraph": {
+      "transport": "stdio",
+      "enabled": false,
+      "command": "scrapegraph-mcp",
+      "env": {
+        "SGAI_API_KEY": "${SGAI_API_KEY}"
+      }
+    },
+    "tavily": {
+      "transport": "stdio",
+      "enabled": true,
+      "command": "tavily-mcp",
+      "env": {
+        "TAVILY_API_KEY": "${TAVILY_API_KEY}"
+      }
+    },
+    "zenrows": {
+      "transport": "stdio",
+      "enabled": true,
+      "command": "npx",
+      "args": [
+        "-y",
+        "@zenrows/mcp"
+      ],
+      "env": {
+        "ZENROWS_API_KEY": "${ZENROWS_API_KEY}"
+      }
+    },
+    "zotero": {
+      "transport": "stdio",
+      "enabled": false,
+      "command": "zotero-mcp",
+      "env": {
+        "ZOTERO_API_KEY": "${ZOTERO_API_KEY}",
+        "ZOTERO_LIBRARY_ID": "22374787"
+      }
+    }
+  }
+}

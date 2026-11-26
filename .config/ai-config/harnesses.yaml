@@ -2,9 +2,10 @@
 #
 # One mapping per harness, four cells each:
 #   instructions  the global instruction file the harness loads
-#   mcp           the file that carries the MCP server set (the same ten servers
-#                 wherever the harness supports per-server flags: OpenCode's set in
-#                 opencode.jsonc; Claude holds codegraph alone)
+#   mcp           the file that carries the MCP server set (the same twelve
+#                 servers wherever the harness mirrors OpenCode: OpenCode's set
+#                 in opencode.jsonc; Claude holds codegraph alone; Command Code
+#                 keeps its own set, adding linear)
 #   skills        the folder the harness reads skills from
 #   files         every other config file the harness owns
 #
@@ -21,18 +22,15 @@
 # The one instruction file is ~/.agents/AGENTS.md. Skills are restored by
 # `npx skills experimental_install` from ~/skills-lock.json into
 # ~/.agents/skills, which every universal agent reads (omo, opencode, kilo,
-# cline); that command never creates Claude links.
+# cline); Command Code reads the same folder through junctions under
+# ~/.commandcode/skills. That command never creates Claude links.
 
-# `shared` holds the rules every harness's MCP cell obeys: the one server that
-# is enabled everywhere, and the env keys whose value may be a literal because
-# it is not a secret (value must match the regex).
+# `shared` names the servers the setup script leaves enabled when it writes the
+# app-owned Cline and Claude files. Doctor reads no rules from it: its MCP check
+# is server-name parity against OpenCode's file.
 shared:
   enabled_servers:
     - codegraph
-  literal_env:
-    ZOTERO_LIBRARY_ID: "^[0-9]+$"
-    OPENCODE_BROWSER_RUNTIME: "^auto-update$"
-    OPENCODE_BROWSER_ALLOW_FILE_URLS: "^1$"
 
 omo:
   instructions:
@@ -225,3 +223,25 @@ claude:
   files:
     - path: "~/.claude/settings.json"
       tracked: true
+
+commandcode:
+  instructions:
+    path: "~/.commandcode/AGENTS.md"
+    tracked: true
+    via: "Command Code reads ~/.commandcode/AGENTS.md natively; it imports ~/.agents/AGENTS.md"
+  mcp:
+    path: "~/.commandcode/mcp.json"
+    tracked: true
+    env_ref: "${VAR}"
+    servers_at: "mcpServers"
+    json_only: "Command Code reads mcp.json only; no mcp.jsonc loader exists (probed 2026-11-07)"
+  skills:
+    path: "~/.agents/skills"
+    tracked: false
+    writer: "npx skills experimental_install"
+  files:
+    - path: "~/.commandcode/settings.json"
+      tracked: true
+    - path: "~/.commandcode/omo-memory.md"
+      tracked: false
+      writer: "setup"

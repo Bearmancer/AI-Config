@@ -7,7 +7,7 @@ from lib.yaml_config import load_registry
 
 CONFIG_DIR = Path(__file__).resolve().parent.parent
 YAML = CONFIG_DIR / "harnesses.yaml"
-HARNESSES = ["omo", "opencode", "kilo", "cline", "claude"]
+HARNESSES = ["omo", "opencode", "kilo", "cline", "claude", "commandcode"]
 
 
 def test_top_level_order_is_stable():

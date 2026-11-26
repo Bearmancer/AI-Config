@@ -36,11 +36,12 @@
 # Code and guards (owner 2026-11-26)
 
 - Least LOC always. No comments and no bloat in plugin or config code. Batch edits; never create files one at a time.
-- Guard plugins stay hard-enforcing: force-pathlib, uv-only-python, forbidden-terminal-commands, python-cli-utf8, ps1-lint. OpenCode V2 `lsp` is inert and `formatter` never blocks, so native tooling cannot replace them; do not downgrade guards to advisory lint.
-- One guard source in OpenCode; the Kilo and Cline copies are byte-identical, exporting dual `{ id, setup, server }`.
+- Guard plugins stay hard-enforcing: python-guard, forbidden-terminal-commands, ps1-lint. OpenCode V2 `lsp` is inert and `formatter` never blocks, so native tooling cannot replace them; do not downgrade guards to advisory lint.
+- One guard source in OpenCode; the Kilo, Cline and CommandCode copies are byte-identical, exporting dual `{ id, setup, server }`.
+- Command Code lives in `~/.commandcode` (mcp.json, settings.json, mods/); its AGENTS.md is import-only (`@~/.agents/AGENTS.md`, `@~/.commandcode/omo-memory.md`); skills reach it through per-skill junctions `~/.commandcode/skills/<name>` → `~/.agents/skills/<name>` made with `mklink /J`, never directory symlinks.
 - PowerShell: write a `.ps1` and run it; `cmd.exe` and inline `pwsh -Command` are forbidden. ps1-lint checks parse errors, PSScriptAnalyzer errors, unresolved commands, unknown/ambiguous parameters and dead literal paths.
-- Python: `uv run <file.py>` with a PEP 723 header; no venvs, no bare `python`/`pip`/`py`; pathlib with explicit UTF-8, no bare `open()`.
-- Credential layout is one `.env` per service under `~/.secrets`; read by exact path, never wildcard-glob the directory; never print or commit a value.
+- Python: 3.13 only. Run `uv run <file.py>` with no flags; libraries `uv pip install <pkg>`, tools `uv tool install <pkg>`; no PEP 723 header, pyproject.toml, uv.lock, .venv, `--with`/`--no-project`/`uvx`, bare `python`/`pip`/`py`; pathlib with explicit UTF-8, no bare `open()`.
+- Credentials: `~/.secrets` holds one `.env` per service; read by exact path, never wildcard-glob the directory; never print or commit a value.
 - Remote access only through Python paramiko; an unknown or changed SSH host key is a human step.
 
 # Asking the user
