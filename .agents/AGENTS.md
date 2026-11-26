@@ -33,6 +33,16 @@
 - No fake completion: TODO-style placeholders, `test.skip`/`.only`, stub tests and unimplemented branches are blockers, not evidence.
 - Keep edits small; split a diff that touches two concerns.
 
+# Code and guards (owner 2026-11-26)
+
+- Least LOC always. No comments and no bloat in plugin or config code. Batch edits; never create files one at a time.
+- Guard plugins stay hard-enforcing: force-pathlib, uv-only-python, forbidden-terminal-commands, python-cli-utf8, ps1-lint. OpenCode V2 `lsp` is inert and `formatter` never blocks, so native tooling cannot replace them; do not downgrade guards to advisory lint.
+- One guard source in OpenCode; the Kilo, Cline and CommandCode copies are byte-identical, exporting dual `{ id, setup, server }`.
+- PowerShell: write a `.ps1` and run it; `cmd.exe` and inline `pwsh -Command` are forbidden. ps1-lint checks parse errors, PSScriptAnalyzer errors, unresolved commands, unknown/ambiguous parameters and dead literal paths.
+- Python: `uv run <file.py>` with a PEP 723 header; no venvs, no bare `python`/`pip`/`py`; pathlib with explicit UTF-8, no bare `open()`.
+- Credential layout is one `.env` per service under `~/.secrets`; read by exact path, never wildcard-glob the directory; never print or commit a value.
+- Remote access only through Python paramiko; an unknown or changed SSH host key is a human step.
+
 # Asking the user
 
 - Put a decision question to the user with the question tool: two to four options, the recommended one first.
