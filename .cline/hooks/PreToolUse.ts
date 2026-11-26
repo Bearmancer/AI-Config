@@ -2,8 +2,7 @@ import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import forbiddenTerminalCommands from "./forbidden-terminal-commands";
-import forcePathlib from "./force-pathlib";
-import uvOnlyPython from "./uv-only-python";
+import pythonGuard from "./python-guard";
 import bannedPaths from "./banned-paths";
 type Hook = (e: { tool: string; input: unknown }) => void | Promise<void>;
 async function capture(plugin: any, label: string): Promise<Hook> {
@@ -14,8 +13,7 @@ async function capture(plugin: any, label: string): Promise<Hook> {
   return reg[0].cb;
 }
 const terminalHook = await capture(forbiddenTerminalCommands, "forbidden-terminal-commands");
-const uvHook = await capture(uvOnlyPython, "uv-only-python");
-const pathlibHook = await capture(forcePathlib, "force-pathlib");
+const pythonHook = await capture(pythonGuard, "python-guard");
 async function capturePermission(plugin: any): Promise<(e: any) => void> {
   let cb: any;
   if (typeof plugin?.setup !== "function") throw new Error("banned-paths must export a setup function");
@@ -73,7 +71,7 @@ export async function inspectToolCall(name: string, args: any): Promise<void> {
     for (const cmd of commandList(args?.commands)) {
       if (typeof cmd !== "string") continue;
       await terminalHook({ tool: "shell", input: { command: cmd } });
-      await uvHook({ tool: "shell", input: { command: cmd } });
+      await pythonHook({ tool: "shell", input: { command: cmd } });
     }
     return;
   }
@@ -81,14 +79,14 @@ export async function inspectToolCall(name: string, args: any): Promise<void> {
     const path = typeof args?.path === "string" ? args.path : "";
     const text = typeof args?.new_text === "string" ? args.new_text : "";
     const edit = args?.old_text !== undefined && args?.old_text !== null;
-    await pathlibHook({ tool: edit ? "edit" : "write", input: { path, filePath: path, ...(edit ? { newString: text } : { content: text }) } });
+    await pythonHook({ tool: edit ? "edit" : "write", input: { path, filePath: path, ...(edit ? { newString: text } : { content: text }) } });
     if (!edit) checkPs1(path, text);
     return;
   }
   if (name === "apply_patch") {
     for (const b of patchBlocks(typeof args?.input === "string" ? args.input : "")) {
       const content = b.lines.join("\n");
-      await pathlibHook({ tool: b.add ? "write" : "edit", input: { path: b.path, filePath: b.path, ...(b.add ? { content } : { newString: content }) } });
+      await pythonHook({ tool: b.add ? "write" : "edit", input: { path: b.path, filePath: b.path, ...(b.add ? { content } : { newString: content }) } });
       if (b.add) checkPs1(b.path, content);
     }
   }

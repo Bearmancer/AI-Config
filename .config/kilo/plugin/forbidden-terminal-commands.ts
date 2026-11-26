@@ -25,7 +25,7 @@ cmd.exe is forbidden in OpenCode shells. Write a .bat (or .py) file and run it o
 const PWSH_MSG = `[Policy Violation: forbidden-terminal-commands]
 Inline 'powershell'/'pwsh' (-Command/-EncodedCommand) is forbidden in OpenCode shells. Write a .ps1 (or .py) file and run it once: './task.ps1' or 'uv run ./task.py'.`;
 const inlineFlag = /(?:^|\s)-(?:c(?:o(?:m(?:m(?:a(?:n(?:d)?)?)?)?)?)?|commandwithargs|cwa|e|ec|enc(?:o(?:d(?:e(?:d(?:c(?:o(?:m(?:m(?:a(?:n(?:d)?)?)?)?)?)?)?)?)?)?)?)(?=\s|:|$)/i;
-const fileFlag = /(?:^|\s)-f(?:i(?:l(?:e)?)?)?\s+(?:"[^"\n]+\.ps1"|'[^'\n]+\.ps1'|[^\s"';&|`()]+\.ps1)/i;
+const fileFlag = /(?:^|\s)-f(?:i(?:l(?:e)?)?)?[ =](?:"[^"\n]+"|'[^'\n]+'|[^\s"';&|`()]+)/i;
 function inspect(input: unknown): void {
   if (!input || typeof input !== "object") return;
   const r = input as Record<string, unknown>;

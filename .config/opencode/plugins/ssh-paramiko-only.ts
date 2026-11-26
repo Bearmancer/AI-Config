@@ -21,7 +21,11 @@ async function setup(ctx: any) {
     if (event.tool === "shell") inspect(event.input?.command);
   });
 }
+async function core(_action: string, resources: string[]) {
+  try { inspect(resources[0]); } catch (e) { return { message: (e as Error).message }; }
+  return {};
+}
 async function server() {
-  return { "tool.execute.before": async (i: any, c: any) => { if (i?.tool === "bash") inspect(c?.args?.command); } };
+  return { core, "tool.execute.before": async (i: any, c: any) => { if (i?.tool === "bash") inspect(c?.args?.command); } };
 }
 export default { id: "ssh-paramiko-only", setup, server };

@@ -136,9 +136,16 @@ async function setup(ctx: any) {
   };
 }
 
+async function core(action: string, resources: string[], content?: string) {
+  const path = resources[0] ?? "";
+  if (!psFile.test(path) || !content?.trim()) return {};
+  const problems = await lint(path).catch((e) => `ps1-lint failed: ${e}`);
+  return problems ? { message: describe(path, problems) } : {};
+}
 async function server() {
   const ev = (i: any) => ({ callID: i?.callID, id: i?.id, toolCallID: i?.toolCallID, sessionID: i?.sessionID, input: { command: i?.args?.command ?? i?.command } });
   return {
+    core,
     "tool.execute.before": async (i: any, c: any) => {
       if (i?.tool !== "bash" || typeof c?.args?.command !== "string") return;
       const cwd = typeof c?.args?.workdir === "string" ? c.args.workdir : process.cwd();

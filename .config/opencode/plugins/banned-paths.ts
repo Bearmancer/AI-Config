@@ -139,7 +139,12 @@ const actions: Record<string, string> = { read: "read", write: "edit", edit: "ed
 
 async function server(input?: any) {
   const base = input?.directory ?? process.cwd();
+  const core = async (action: string, resources: string[]) => {
+    const message = verdict(action, resources, base);
+    return message ? { message, paths: resources } : {};
+  };
   return {
+    core,
     "tool.execute.before": async (i: any, c: any) => {
       const action = actions[i?.tool];
       const resource = action === "shell" ? c?.args?.command : action === "glob" ? c?.args?.pattern : (c?.args?.filePath ?? c?.args?.path);
