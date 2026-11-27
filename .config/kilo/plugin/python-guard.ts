@@ -9,7 +9,7 @@ const BANNED: Record<string, string> = {
   sync: "`uv sync` is forbidden: no pyproject.toml, no uv.lock, no project env. Use `uv pip install <pkg>`.",
   lock: "`uv lock` is forbidden: no lockfiles on this box. Use `uv pip install <pkg>`.",
   init: "`uv init` is forbidden: no pyproject.toml, ever. A script is a .py file run with `uv run <file.py>`.",
-  tool: "uv tool: name the package (`uv tool install <pkg>`). uvx/`uv tool run` is not used here: install the tool once, then call it by name.",
+  tool: "`uv tool` allows only install, list, upgrade and uninstall: install the tool once, then call it by name.",
 };
 const INTERPRETERS = /^(?:.*[\\\/])?(?:python[\d._]*|pypy[\d._]*|py)(?:\.exe)?$/;
 const PIPS = /^(?:.*[\\\/])?(?:pip[\d._]*|pipx)(?:\.exe)?$/;
@@ -60,8 +60,8 @@ function violation(stmt: string): string | null {
   if (PIPS.test(b)) return `Direct '${b}' is forbidden. Use 'uv pip install <pkg>' for libraries and 'uv tool install <pkg>' for tools.`;
   if (!UVS.test(b)) return null;
   if (/^virtualenv(?:\.exe)?$/.test(b) || sub === "venv" || sub === "virtualenv") return NO_VENV;
-  if (sub === "uvx" || sub === "tool" && words[1]?.toLowerCase() === "run") return "`uvx`/`uv tool run` is not used: `uv tool install <pkg>` once, then call the tool by name.";
-  if (BANNED[sub]) return BANNED[sub];
+  if (/(?:^|[\\\/])uvx(?:\.exe)?$/.test(b) || sub === "tool" && words[1]?.toLowerCase() === "run") return "`uvx`/`uv tool run` is not used: `uv tool install <pkg>` once, then call the tool by name.";
+  if (BANNED[sub] && !(sub === "tool" && /^(install|list|upgrade|uninstall)$/i.test(words[1] ?? ""))) return BANNED[sub];
   if (sub === "run") {
     for (const w of words.slice(1)) {
       if (!w.startsWith("-")) break;
