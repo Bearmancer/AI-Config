@@ -7,12 +7,20 @@
 					"model": "anthropic-subscription/claude-sonnet-5-5",
 					"reasoning": "high",
 				},
+				{
+					"model": "qwen-token-plan-individual/qwen3.8-max",
+					"reasoning": "xhigh",
+				},
 			],
 		},
 		"architect": {
 			"models": [
 				{
 					"model": "anthropic-subscription/claude-sonnet-5-5",
+					"reasoning": "high",
+				},
+				{
+					"model": "qwen-token-plan-individual/qwen3.8-max",
 					"reasoning": "high",
 				},
 			],
@@ -23,6 +31,10 @@
 					"model": "anthropic-subscription/claude-sonnet-5-5",
 					"reasoning": "high",
 				},
+				{
+					"model": "qwen-token-plan-individual/qwen3.8-max",
+					"reasoning": "high",
+				},
 			],
 		},
 		"deep-high": {
@@ -31,12 +43,20 @@
 					"model": "anthropic-subscription/claude-sonnet-5-5",
 					"reasoning": "high",
 				},
+				{
+					"model": "qwen-token-plan-individual/qwen3.8-max",
+					"reasoning": "high",
+				},
 			],
 		},
 		"unspecified-high": {
 			"models": [
 				{
 					"model": "anthropic-subscription/claude-sonnet-5-5",
+					"reasoning": "high",
+				},
+				{
+					"model": "qwen-token-plan-individual/qwen3.8-max",
 					"reasoning": "high",
 				},
 			],
@@ -135,12 +155,20 @@
 					"model": "anthropic-subscription/claude-sonnet-5-5",
 					"reasoning": "high",
 				},
+				{
+					"model": "qwen-token-plan-individual/qwen3.8-max",
+					"reasoning": "high",
+				},
 			],
 		},
 		"omo-native-code-reviewer": {
 			"models": [
 				{
 					"model": "anthropic-subscription/claude-sonnet-5-5",
+					"reasoning": "high",
+				},
+				{
+					"model": "qwen-token-plan-individual/qwen3.8-max",
 					"reasoning": "high",
 				},
 			],
@@ -167,6 +195,10 @@
 					"model": "qwen-token-plan/qwen3.8-flash",
 					"reasoning": "low",
 				},
+				{
+					"model": "qwen-token-plan-individual/qwen3.8-flash",
+					"reasoning": "low",
+				},
 			],
 		},
 		"librarian": {
@@ -187,6 +219,10 @@
 					"model": "anthropic-subscription/claude-sonnet-5-5",
 					"reasoning": "high",
 				},
+				{
+					"model": "qwen-token-plan-individual/qwen3.8-max",
+					"reasoning": "high",
+				},
 			],
 		},
 		"plan-consultant": {
@@ -195,23 +231,36 @@
 					"model": "anthropic-subscription/claude-sonnet-5-5",
 					"reasoning": "high",
 				},
+				{
+					"model": "qwen-token-plan-individual/qwen3.8-max",
+					"reasoning": "high",
+				},
 			],
 		},
 	},
 	"model_profile": "anthropic-subscription/claude-sonnet-5-5",
 	"exclude_models": [
-		"anthropic-subscription/claude-fable*",
-		"anthropic-subscription/claude-sonnet-5",
-		"anthropic-subscription/claude-haiku-4*",
-		"anthropic-subscription/claude-sonnet-4*",
-		"opencode-go/kimi-*",
-		"*antigravity*",
+		"*claude-opus*",
+		"*claude-fable*",
+		"*claude-sonnet-4*",
+		"*claude-haiku-4*",
+		"*claude-sonnet-5",
+		"o1*",
+		"o3*",
+		"o4*",
+		"openai/*",
+		"chatgpt-subscription/*",
+		"azure-openai-responses/*",
+		"*gpt*",
+		"google/*",
+		"google-vertex/*",
 		"*gemini*",
+		"*gemma*",
+		"*antigravity*",
+		"*kimi*",
+		"*grok*",
 		"*qwen3.5*",
 		"*qwen3.6*",
-		"*qwen3.8-max*",
-		"*grok*",
-		"*claude-opus*",
 	],
 	// Research / web-search / knowledge skill packs hidden from discovery (owner request, 2026-11-02); annotate-paper added after the later "all research/academia" request; data-scientist added at owner request; rigorous-research re-enabled
 	"disabled_skills": [
