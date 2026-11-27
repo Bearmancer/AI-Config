@@ -68,7 +68,7 @@
 					"reasoning": "medium",
 				},
 				{
-					"model": "qwen-token-plan/qwen3.8-flash",
+					"model": "qwen-token-plan-individual/qwen3.8-flash",
 					"reasoning": "medium",
 				},
 			],
@@ -80,7 +80,7 @@
 					"reasoning": "medium",
 				},
 				{
-					"model": "qwen-token-plan/qwen3.8-flash",
+					"model": "qwen-token-plan-individual/qwen3.8-flash",
 					"reasoning": "medium",
 				},
 			],
@@ -92,7 +92,7 @@
 					"reasoning": "medium",
 				},
 				{
-					"model": "qwen-token-plan/qwen3.8-flash",
+					"model": "qwen-token-plan-individual/qwen3.8-flash",
 					"reasoning": "medium",
 				},
 			],
@@ -104,7 +104,7 @@
 					"reasoning": "low",
 				},
 				{
-					"model": "qwen-token-plan/qwen3.8-flash",
+					"model": "qwen-token-plan-individual/qwen3.8-flash",
 					"reasoning": "low",
 				},
 			],
@@ -116,7 +116,7 @@
 					"reasoning": "low",
 				},
 				{
-					"model": "qwen-token-plan/qwen3.8-flash",
+					"model": "qwen-token-plan-individual/qwen3.8-flash",
 					"reasoning": "low",
 				},
 			],
@@ -132,7 +132,7 @@
 		"sleeptime": {
 			"models": [
 				{
-					"model": "qwen-token-plan/qwen3.8-flash",
+					"model": "qwen-token-plan-individual/qwen3.8-flash",
 					"reasoning": "xhigh",
 				},
 			],
@@ -180,7 +180,7 @@
 					"reasoning": "medium",
 				},
 				{
-					"model": "qwen-token-plan/qwen3.8-flash",
+					"model": "qwen-token-plan-individual/qwen3.8-flash",
 					"reasoning": "medium",
 				},
 			],
@@ -189,10 +189,6 @@
 			"models": [
 				{
 					"model": "anthropic-subscription/claude-haiku-5-5",
-					"reasoning": "low",
-				},
-				{
-					"model": "qwen-token-plan/qwen3.8-flash",
 					"reasoning": "low",
 				},
 				{
@@ -208,7 +204,7 @@
 					"reasoning": "low",
 				},
 				{
-					"model": "qwen-token-plan/qwen3.8-flash",
+					"model": "qwen-token-plan-individual/qwen3.8-flash",
 					"reasoning": "low",
 				},
 			],
