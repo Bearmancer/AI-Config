@@ -3,10 +3,10 @@
   "disabledProviders": ["anthropic", "openrouter", "alibaba-token-plan", "google-vertex", "meta"],
   "providers": {
     "qwen-token-plan": {
-      "whitelist": ["qwen3.8-flash"]
+      "whitelist": ["qwen3.8-flash", "qwen3.8-max", "qwen3.8-max-preview"]
     },
     "qwen-token-plan-individual": {
-      "whitelist": ["qwen3.8-flash"]
+      "whitelist": ["qwen3.8-flash", "qwen3.8-max"]
     },
     "opencode-go": {
       "whitelist": ["beam-free", "crouton-alpha-free", "iceman-contributor-free"]
