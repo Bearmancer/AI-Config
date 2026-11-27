@@ -60,7 +60,7 @@ function violation(stmt: string): string | null {
   if (PIPS.test(b)) return `Direct '${b}' is forbidden. Use 'uv pip install <pkg>' for libraries and 'uv tool install <pkg>' for tools.`;
   if (!UVS.test(b)) return null;
   if (/^virtualenv(?:\.exe)?$/.test(b) || sub === "venv" || sub === "virtualenv") return NO_VENV;
-  if (sub === "uvx" || sub === "tool" && words[1]?.toLowerCase() === "run") return "`uvx`/`uv tool run` is not used: `uv tool install <pkg>` once, then call the tool by name.";
+  if (/(?:^|[\\\/])uvx(?:\.exe)?$/.test(b) || sub === "tool" && words[1]?.toLowerCase() === "run") return "`uvx`/`uv tool run` is not used: `uv tool install <pkg>` once, then call the tool by name.";
   if (BANNED[sub] && !(sub === "tool" && /^(install|list|upgrade|uninstall)$/i.test(words[1] ?? ""))) return BANNED[sub];
   if (sub === "run") {
     for (const w of words.slice(1)) {
