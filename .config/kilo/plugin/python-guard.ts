@@ -14,8 +14,10 @@ const BANNED: Record<string, string> = {
 const INTERPRETERS = /^(?:.*[\\\/])?(?:python[\d._]*|pypy[\d._]*|py)(?:\.exe)?$/;
 const PIPS = /^(?:.*[\\\/])?(?:pip[\d._]*|pipx)(?:\.exe)?$/;
 const UVS = /^(?:.*[\\\/])?(?:uv|uvx|virtualenv)(?:\.exe)?$/;
-const RUN_FLAGS = /^--(with|no-project|isolated|quiet|script|python|extra|requirements|index|build-isolation|no-sync)(?:=|$)/;
-const RUN_PY = /\buv(?:\.exe)?\s+run\b[^;|&\n]*?\bpython(?:\.exe)?\b(?:\s+-[A-Za-z]+)*\s+(?:"[^"]+\.py"|'[^']+\.py'|[^\s"';|&]+\.py\b)/i;
+const unq = (w: string) => w.replace(/^["']|["']$/g, "");
+const words = (s: string): string[] => s.match(/(?:"[^"]*"|'[^']*'|[^\s"'])+/g) ?? [];
+const bare = (w: string) => unq(w.replace(/^(?:\$?\(|\{|\$?[\w:]+=)+/, "").replace(/^\$/, "").replace(/[)}]+$/, "")).toLowerCase();
+const SHELLS = /^(?:.*[\\\/])?(?:(?:ba|da|z|k)?sh|powershell|pwsh|cmd)(?:\.exe)?$/;
 const HEADER = /^[ \t]*#[ \t]*\/\/\/[ \t]*(?:script|dependencies|requires-python|tool)[ \t]*$/im;
 const OPS = /(?:\b(?:open\s*\(|os\.path\b|os\.listdir\b|os\.walk\b|os\.mkdir\b|os\.makedirs\b|os\.remove\b|os\.unlink\b|shutil\b))/;
 const HAS_PATHLIB = /(?:from\s+pathlib\s+import|\bimport\s+pathlib\b)/;
@@ -24,28 +26,32 @@ const SHIM = /(?:^|[;&|\n])\s*(?:&\s*)?(?:"[^"\n]*[\\/]tvly(?:\.exe)?"|'[^'\n]*[
 const FIX_PATHLIB = `\n\nRemediation:\n1. Import Path: from pathlib import Path\n2. Read files: Path(p).read_text(encoding="utf-8")\n3. Write files: Path(p).write_text(content, encoding="utf-8")\n4. Paths: Use Path(r'C:\\...') or forward slashes Path('C:/...')`;
 const FIX_OPEN = `\n\nRemediation:\n1. Import Path: from pathlib import Path\n2. Read files: Path(p).read_text(encoding="utf-8")\n3. Or stream: Path(p).open("r", encoding="utf-8")`;
 const RUN_PY_MSG = "[Policy Violation: uv-run-script]\n`uv run ... python <file.py>` is blocked. Run `uv run <file.py> <args>`, with no uv flags; a script's libraries come from `uv pip install <pkg>`.";
+const NO_FLAGS = (w: string) => `\`uv run\` takes no flags: '${w}'. Libraries come from \`uv pip install <pkg>\`, the version from ~\\.python-version (3.13), and a script needs no header. Run \`uv run <file.py> <args>\`.`;
 const HEADER_MSG = "[Policy Violation: uv-run-script]\nA PEP 723 `# /// script` header is banned here: uv gives a headered script a sealed env, so packages from `uv pip install` are invisible to it. Delete the header and run `uv run <file.py>`; name the dependency in a `uv pip install <pkg>` line in the docstring or skill doc instead.";
 
-/** Statements of a command, top level plus the body of any `sh -c`. */
+/** Statements of a command, top level plus the quoted body of any shell wrapper. */
 function split(cmd: string): string[] {
-  cmd = cmd.trim();
+  cmd = cmd.trim().replace(/(?:`|\s\\)\r?\n/g, " ");
   const top: string[] = [];
   let cur = "", dq = false, sq = false;
   const push = () => { if (cur.trim()) top.push(cur.trim()); cur = ""; };
   for (let i = 0; i < cmd.length; i++) {
     const ch = cmd[i];
+    if (ch === "`" && !sq && /["'`]/.test(cmd[i + 1] ?? "")) { cur += ch + cmd[++i]; continue; }
     if (ch === '"' && !sq) dq = !dq;
     else if (ch === "'" && !dq) sq = !sq;
-    else if (!dq && !sq && (ch === ";" || ch === "\n" || (ch === "&" && cmd[i + 1] === "&") || (ch === "|" && cmd[i + 1] === "|"))) { push(); if (ch === "&" || ch === "|") i++; continue; }
-    else if (!dq && !sq && ch === "|") { push(); continue; }
+    else if (!dq && !sq && (ch === ";" || ch === "\n" || ch === "&" || ch === "|")) { push(); if ((ch === "&" || ch === "|") && cmd[i + 1] === ch) i++; continue; }
     cur += ch;
   }
   push();
   const out: string[] = [];
   for (const s of top) {
     out.push(s);
-    const w = s.match(/^(?:\S*[\\\/])?(?:ba|da|z|k)?sh(?:\.exe)?\s+(?:-\S+\s+)*?-\w*c\w*\s+(?:"((?:[^"\\]|\\.)*)"|'([^']*)')\s*$/i);
-    if (w) out.push(...split(w[1] ?? w[2] ?? ""));
+    const t = words(s);
+    const sh = t.findIndex((w) => SHELLS.test(bare(w)));
+    const flag = sh < 0 ? -1 : t.findIndex((w, i) => i > sh && /^(?:-command|-\w*c|\/c)$/i.test(w));
+    const body = flag < 0 ? "" : t[flag + 1] ?? "";
+    if (/^["']/.test(body)) out.push(...split(unq(body)));
   }
   return out;
 }
@@ -54,19 +60,34 @@ function violation(stmt: string): string | null {
   const m = stmt.match(/^\s*(?:(?:call|start|exec|&)\s+)?(?:"([^"\n]+)"|'([^'\n]+)'|([^\s"';&|`()]+))\s*(.*)$/i);
   if (!m) return null;
   const b = (m[1] || m[2] || m[3] || "").toLowerCase();
-  const words = (m[4] || "").trim().split(/\s+/).filter(Boolean);
-  const sub = (words[0] || "").toLowerCase();
+  const args = words(m[4] || "");
+  const sub = (args[0] || "").toLowerCase();
   if (INTERPRETERS.test(b)) return b === "py" || b === "py.exe" ? "`py` is forbidden (it resolves to a python.org install, not the one `uv run` uses). Use `uv run <file.py> <args>`." : `Direct '${b}' is forbidden. Use uv only: 'uv run ./script.py <args>' with no flags.`;
   if (PIPS.test(b)) return `Direct '${b}' is forbidden. Use 'uv pip install <pkg>' for libraries and 'uv tool install <pkg>' for tools.`;
   if (!UVS.test(b)) return null;
   if (/^virtualenv(?:\.exe)?$/.test(b) || sub === "venv" || sub === "virtualenv") return NO_VENV;
-  if (/(?:^|[\\\/])uvx(?:\.exe)?$/.test(b) || sub === "tool" && words[1]?.toLowerCase() === "run") return "`uvx`/`uv tool run` is not used: `uv tool install <pkg>` once, then call the tool by name.";
-  if (BANNED[sub] && !(sub === "tool" && /^(install|list|upgrade|uninstall)$/i.test(words[1] ?? ""))) return BANNED[sub];
-  if (sub === "run") {
-    for (const w of words.slice(1)) {
-      if (!w.startsWith("-")) break;
-      if (RUN_FLAGS.test(w)) return `\`uv run\` takes no flags: '${w}'. Libraries come from \`uv pip install <pkg>\`, the version from ~\\.python-version (3.13), and a script needs no header. Run \`uv run <file.py> <args>\`.`;
-    }
+  if (/(?:^|[\\\/])uvx(?:\.exe)?$/.test(b) || sub === "tool" && args[1]?.toLowerCase() === "run") return "`uvx`/`uv tool run` is not used: `uv tool install <pkg>` once, then call the tool by name.";
+  if (BANNED[sub] && !(sub === "tool" && /^(install|list|upgrade|uninstall)$/i.test(args[1] ?? ""))) return BANNED[sub];
+  if (sub.startsWith("-") && args.some((w) => bare(w) === "run")) return NO_FLAGS(args[0]);
+  if (bare(sub) !== "run") return null;
+  const w = args[1];
+  if (!w) return "`uv run` needs a .py file: `uv run <file.py> <args>`.";
+  if (w.startsWith("-")) return NO_FLAGS(w);
+  const script = unq(w.replace(/[)}]+$/, ""));
+  if (INTERPRETERS.test(script.toLowerCase())) return RUN_PY_MSG;
+  if (!script.startsWith("$") && !/\.py$/i.test(script)) return `\`uv run\` takes a .py file as its first argument: got '${w}'.`;
+  return null;
+}
+
+/** `uv ... run` behind a prefix: assignment, subshell, script block, env, timeout, cmd /c. */
+function nested(stmt: string): string | null {
+  const t = words(stmt);
+  for (let i = 0; i < t.length; i++) {
+    if (!UVS.test(bare(t[i]))) continue;
+    const rest = t.slice(i + 1);
+    if (!(rest[0]?.startsWith("-") ? rest.some((w) => bare(w) === "run") : bare(rest[0] ?? "") === "run")) continue;
+    const why = violation(["uv", ...rest].join(" "));
+    if (why) return why;
   }
   return null;
 }
@@ -78,10 +99,9 @@ function inspect(tool: string, input: unknown): void {
     const cmd = typeof r.command === "string" ? r.command : typeof r.cmd === "string" ? r.cmd : "";
     if (!cmd) return;
     for (const s of split(cmd)) {
-      const why = s.trim() ? violation(s.trim()) : null;
+      const why = s.trim() ? violation(s.trim()) ?? nested(s) : null;
       if (why) throw new Error(`[Policy Violation: uv-only-python]\n${why}`);
     }
-    if (RUN_PY.test(cmd)) throw new Error(RUN_PY_MSG);
     if (!/PYTHONIOENCODING/i.test(cmd) && SHIM.test(cmd)) {
       const pre = "$env:PYTHONIOENCODING='utf-8'; ";
       if (typeof r.command === "string") r.command = pre + cmd;
