@@ -14,8 +14,7 @@ const BANNED: Record<string, string> = {
 const INTERPRETERS = /^(?:.*[\\\/])?(?:python[\d._]*|pypy[\d._]*|py)(?:\.exe)?$/;
 const PIPS = /^(?:.*[\\\/])?(?:pip[\d._]*|pipx)(?:\.exe)?$/;
 const UVS = /^(?:.*[\\\/])?(?:uv|uvx|virtualenv)(?:\.exe)?$/;
-const RUN_FLAGS = /^--(with|no-project|isolated|quiet|script|python|extra|requirements|index|build-isolation|no-sync)(?:=|$)/;
-const RUN_PY = /\buv(?:\.exe)?\s+run\b[^;|&\n]*?\bpython(?:\.exe)?\b(?:\s+-[A-Za-z]+)*\s+(?:"[^"]+\.py"|'[^']+\.py'|[^\s"';|&]+\.py\b)/i;
+const unq = (w: string) => w.replace(/^["']|["']$/g, "");
 const HEADER = /^[ \t]*#[ \t]*\/\/\/[ \t]*(?:script|dependencies|requires-python|tool)[ \t]*$/im;
 const OPS = /(?:\b(?:open\s*\(|os\.path\b|os\.listdir\b|os\.walk\b|os\.mkdir\b|os\.makedirs\b|os\.remove\b|os\.unlink\b|shutil\b))/;
 const HAS_PATHLIB = /(?:from\s+pathlib\s+import|\bimport\s+pathlib\b)/;
@@ -44,7 +43,7 @@ function split(cmd: string): string[] {
   const out: string[] = [];
   for (const s of top) {
     out.push(s);
-    const w = s.match(/^(?:\S*[\\\/])?(?:ba|da|z|k)?sh(?:\.exe)?\s+(?:-\S+\s+)*?-\w*c\w*\s+(?:"((?:[^"\\]|\\.)*)"|'([^']*)')\s*$/i);
+    const w = s.match(/^(?:\S*[\\\/])?(?:(?:ba|da|z|k)?sh(?:\.exe)?|powershell(?:\.exe)?|pwsh(?:\.exe)?)\s+(?:-\S+\s+)*?(?:-command|-c|-\w*c\w*)\s+(?:"((?:[^"\\]|\\.)*)"|'([^']*)')\s*$/i);
     if (w) out.push(...split(w[1] ?? w[2] ?? ""));
   }
   return out;
@@ -64,9 +63,14 @@ function violation(stmt: string): string | null {
   if (BANNED[sub] && !(sub === "tool" && /^(install|list|upgrade|uninstall)$/i.test(words[1] ?? ""))) return BANNED[sub];
   if (sub === "run") {
     for (const w of words.slice(1)) {
-      if (!w.startsWith("-")) break;
-      if (RUN_FLAGS.test(w)) return `\`uv run\` takes no flags: '${w}'. Libraries come from \`uv pip install <pkg>\`, the version from ~\\.python-version (3.13), and a script needs no header. Run \`uv run <file.py> <args>\`.`;
+      if (!w.startsWith("-")) {
+        if (INTERPRETERS.test(unq(w))) return RUN_PY_MSG;
+        if (!/\.py$/i.test(unq(w))) return `\`uv run\` takes a .py file as its first argument: got '${w}'.`;
+        return null;
+      }
+      return `\`uv run\` takes no flags: '${w}'. Libraries come from \`uv pip install <pkg>\`, the version from ~\\.python-version (3.13), and a script needs no header. Run \`uv run <file.py> <args>\`.`;
     }
+    return "`uv run` needs a .py file: `uv run <file.py> <args>`.";
   }
   return null;
 }
@@ -81,7 +85,6 @@ function inspect(tool: string, input: unknown): void {
       const why = s.trim() ? violation(s.trim()) : null;
       if (why) throw new Error(`[Policy Violation: uv-only-python]\n${why}`);
     }
-    if (RUN_PY.test(cmd)) throw new Error(RUN_PY_MSG);
     if (!/PYTHONIOENCODING/i.test(cmd) && SHIM.test(cmd)) {
       const pre = "$env:PYTHONIOENCODING='utf-8'; ";
       if (typeof r.command === "string") r.command = pre + cmd;
